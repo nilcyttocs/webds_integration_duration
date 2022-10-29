@@ -12,8 +12,12 @@ import StepLabel from "@mui/material/StepLabel";
 import StepConnector from "@mui/material/StepConnector";
 
 import Slider from "@mui/material/Slider";
+import TextField from "@mui/material/TextField";
 
-import { styled } from "@mui/material/styles";
+import KeyboardArrowLeft from "@mui/icons-material/KeyboardArrowLeft";
+import KeyboardArrowRight from "@mui/icons-material/KeyboardArrowRight";
+
+import { styled, useTheme } from "@mui/material/styles";
 
 import Plot from "react-plotly.js";
 
@@ -56,7 +60,7 @@ const steps = [
 
 const rawData = {
   x: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
-  y: [7, 17, 16, 21, 24, 23, 24, 25, 24, 25]
+  y: [7, 17, 16, 19, 22, 21, 23, 25, 24, 25]
 };
 
 const rawXMin = Math.min.apply(null, rawData.x);
@@ -75,8 +79,7 @@ const scatterData = {
 };
 
 const points = 500;
-const scale = points / 100;
-const step = (rawXMax - rawXMin) / points;
+const step = (rawXMax - rawXMin) / (points - 1);
 
 const sigmoidData = {
   x: [] as number[],
@@ -218,6 +221,12 @@ const sigmoid = (x: number, L: number, x0: number, k: number, b: number) => {
 
 let sigmoidParams: [number, number, number, number];
 
+let minThreshold = 0;
+
+const slider2Threshold = (value: number): number => {
+  return ((100 - minThreshold) / (points - 1)) * value + minThreshold;
+};
+
 const resetPlot = () => {
   sigmoidData.x = [];
   sigmoidData.y = [];
@@ -271,7 +280,7 @@ const initPlot = async () => {
       method: "POST"
     });
     sigmoidParams = response;
-    for (let i = 0; i <= points; i++) {
+    for (let i = 0; i < points; i++) {
       const x = rawXMin + i * step;
       const y = sigmoid(x, ...sigmoidParams);
       sigmoidData.x.push(x);
@@ -280,11 +289,17 @@ const initPlot = async () => {
     sigmoidYMin = Math.min.apply(null, sigmoidData.y);
     sigmoidYMax = Math.max.apply(null, sigmoidData.y);
     sigmoidYRange = sigmoidYMax - sigmoidYMin;
-    for (let i = 0; i <= points; i++) {
+    for (let i = 0; i < points; i++) {
       sigmoidData.yScaled.push(
         ((sigmoidData.y[i] - sigmoidYMin) / sigmoidYRange) * 100
       );
     }
+    minThreshold =
+      Math.floor(
+        ((sigmoid(scatterData.x[1], ...sigmoidParams) - sigmoidYMin) /
+          sigmoidYRange) *
+          100
+      ) - 1;
   } catch (error) {
     Promise.reject(error);
   }
@@ -295,9 +310,25 @@ export const Landing = (props: any): JSX.Element => {
   const [layout, setLayout] = useState<any>({});
   const [config, setConfig] = useState<any>({});
   const [frames, setFrames] = useState<any>([]);
-  const [intDur, setIntDur] = useState<number>();
+  const [intDur, setIntDur] = useState<number | null>();
   const [sliderValue, setSliderValue] = useState<number>(0);
   const [activeStep, setActiveStep] = useState<number>(0);
+
+  const theme = useTheme();
+
+  const handleIntDurInputChange = (value: string) => {
+    if (value !== "" && isNaN(Number(value))) {
+      return;
+    }
+    if (value === "") {
+      setIntDur(null);
+      return;
+    }
+    const num = parseInt(value, 10);
+    if (num < 100) {
+      setIntDur(num);
+    }
+  };
 
   const storeState = (figure: any) => {
     setData(figure.data);
@@ -310,12 +341,12 @@ export const Landing = (props: any): JSX.Element => {
     setActiveStep((prevActiveStep) => prevActiveStep + 1);
   };
 
-  const handlePrevButtonClick = () => {
+  const handleBackButtonClick = () => {
     setActiveStep((prevActiveStep) => prevActiveStep - 1);
   };
 
   const handleSliderOnChange = (event: any) => {
-    const intDur = updatePlot(event.target.value / scale);
+    const intDur = updatePlot(slider2Threshold(event.target.value));
     setData([plotData[0], plotData[1]]);
     setLayout(plotLayout);
     setIntDur(intDur);
@@ -323,11 +354,11 @@ export const Landing = (props: any): JSX.Element => {
   };
 
   useEffect(() => {
-    plotLayout.plot_bgcolor = props.theme === "light" ? "#fff" : "#000";
-    plotLayout.font.color = props.fontColor;
+    plotLayout.plot_bgcolor = theme.palette.mode === "light" ? "#fff" : "#000";
+    plotLayout.font.color = theme.palette.text.primary;
     setData([plotData[0], plotData[1]]);
     setLayout(plotLayout);
-  }, [props.theme, props.fontColor]);
+  }, [theme]);
 
   useEffect(() => {
     const initialize = async () => {
@@ -354,7 +385,7 @@ export const Landing = (props: any): JSX.Element => {
             width: WIDTH + "px",
             height: HEIGHT_TITLE + "px",
             position: "relative",
-            bgcolor: "section.main"
+            bgcolor: "section.background"
           }}
         >
           <Typography
@@ -378,9 +409,7 @@ export const Landing = (props: any): JSX.Element => {
                 transform: "translate(0%, -50%)"
               }}
             >
-              <Typography variant="body2" sx={{ textDecoration: "underline" }}>
-                Help
-              </Typography>
+              <Typography variant="underline">Help</Typography>
             </Button>
           )}
         </Box>
@@ -391,7 +420,7 @@ export const Landing = (props: any): JSX.Element => {
             boxSizing: "border-box",
             padding: PADDING + "px",
             position: "relative",
-            bgcolor: "section.main",
+            bgcolor: "section.background",
             display: "flex"
           }}
         >
@@ -432,11 +461,11 @@ export const Landing = (props: any): JSX.Element => {
                 <div style={{ width: CONTENT_PANEL_WIDTH + "px" }}>
                   <Stack spacing={1} direction="row">
                     <Typography variant="body2" sx={{ paddingTop: "5px" }}>
-                      Threshold: 0&nbsp;
+                      Threshold: {minThreshold}&nbsp;
                     </Typography>
                     <Slider
                       size="small"
-                      max={points}
+                      max={points - 1}
                       value={sliderValue}
                       onChange={handleSliderOnChange}
                     />
@@ -445,9 +474,32 @@ export const Landing = (props: any): JSX.Element => {
                     </Typography>
                   </Stack>
                 </div>
-                <Typography variant="body2" sx={{ alignSelf: "stretch" }}>
-                  Integration Duration: {intDur}&mu;s
-                </Typography>
+                <div style={{ alignSelf: "stretch" }}>
+                  <Typography variant="body2" sx={{ display: "inline-block" }}>
+                    Integration Duration:&nbsp;
+                  </Typography>
+                  <TextField
+                    variant="standard"
+                    value={intDur ? intDur : ""}
+                    inputProps={{ style: { textAlign: "center" } }}
+                    onChange={(event) =>
+                      handleIntDurInputChange(event.target.value)
+                    }
+                    sx={{
+                      width: "18px",
+                      display: "inline-block",
+                      "& .MuiInput-root": {
+                        fontSize: "0.875rem"
+                      },
+                      "& .MuiInput-input": {
+                        padding: 0
+                      }
+                    }}
+                  />
+                  <Typography variant="body2" sx={{ display: "inline-block" }}>
+                    &nbsp;&mu;s
+                  </Typography>
+                </div>
               </Stack>
             </div>
           </Stack>
@@ -459,7 +511,7 @@ export const Landing = (props: any): JSX.Element => {
             boxSizing: "border-box",
             padding: PADDING + "px",
             position: "relative",
-            bgcolor: "section.main",
+            bgcolor: "section.background",
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
@@ -470,47 +522,32 @@ export const Landing = (props: any): JSX.Element => {
           <Button
             variant="text"
             disabled={activeStep === 0}
-            onClick={() => handlePrevButtonClick()}
+            onClick={() => handleBackButtonClick()}
             sx={{
+              padding: 0,
               position: "absolute",
               top: "50%",
               left: "24px",
               transform: "translate(0%, -50%)"
             }}
           >
-            <Typography
-              variant="body2"
-              sx={{
-                color: activeStep === 0 ? "colors.grey" : props.fontColor,
-                textDecoration: "underline"
-              }}
-            >
-              Prev
-            </Typography>
+            <KeyboardArrowLeft />
+            Back
           </Button>
           <Button
             variant="text"
             disabled={activeStep === steps.length - 1}
             onClick={() => handleNextButtonClick()}
             sx={{
+              padding: 0,
               position: "absolute",
               top: "50%",
               right: "24px",
               transform: "translate(0%, -50%)"
             }}
           >
-            <Typography
-              variant="body2"
-              sx={{
-                color:
-                  activeStep === steps.length - 1
-                    ? "colors.grey"
-                    : props.fontColor,
-                textDecoration: "underline"
-              }}
-            >
-              Next
-            </Typography>
+            Next
+            <KeyboardArrowRight />
           </Button>
         </Box>
       </Stack>
