@@ -1,50 +1,36 @@
 import React, { useEffect, useState } from "react";
 
-import Box from "@mui/material/Box";
-import Button from "@mui/material/Button";
 import Stack from "@mui/material/Stack";
-import Typography from "@mui/material/Typography";
 import Divider from "@mui/material/Divider";
-
-import Stepper from "@mui/material/Stepper";
-import Step from "@mui/material/Step";
-import StepLabel from "@mui/material/StepLabel";
-import StepConnector from "@mui/material/StepConnector";
+import Button from "@mui/material/Button";
+import Typography from "@mui/material/Typography";
 
 import Slider from "@mui/material/Slider";
 import TextField from "@mui/material/TextField";
 
-import KeyboardArrowLeft from "@mui/icons-material/KeyboardArrowLeft";
-import KeyboardArrowRight from "@mui/icons-material/KeyboardArrowRight";
-
-import { styled, useTheme } from "@mui/material/styles";
+import { useTheme } from "@mui/material/styles";
 
 import Plot from "react-plotly.js";
 
+import { Canvas } from "./mui_extensions/Canvas";
+import { Content } from "./mui_extensions/Content";
+import { Controls } from "./mui_extensions/Controls";
+import {
+  CANVAS_ATTRS,
+  ContentAttrs,
+  getContentAttrs
+} from "./mui_extensions/constants";
+
+import { VerticalStepper } from "./mui_extensions/Stepper";
+
+import { BackButton, NextButton } from "./mui_extensions/Button";
+
 import { requestAPI } from "../handler";
 
-const showHelp = false;
+const contentAttrs: ContentAttrs = getContentAttrs();
 
-const WIDTH = 800;
-const HEIGHT_TITLE = 70;
-const HEIGHT_CONTENT = 450;
-const HEIGHT_CONTROLS = 120;
-const PADDING = 24;
-
-const CONTENT_SPACING = 2;
-const CONTENT_PANEL_WIDTH = (WIDTH - PADDING * 2 - CONTENT_SPACING * 8 * 2) / 2;
-
-const PLOT_WIDTH = CONTENT_PANEL_WIDTH;
+const PLOT_WIDTH = contentAttrs.PANEL_WIDTH;
 const PLOT_HEIGHT = 300;
-
-const STEP_ICON_SIZE = 32;
-
-const CustomStepConnector = styled(StepConnector)(({ theme }) => ({
-  "& .MuiStepConnector-line": {
-    minHeight: "80px",
-    marginLeft: "4px"
-  }
-}));
 
 const steps = [
   {
@@ -59,8 +45,8 @@ const steps = [
 ];
 
 const rawData = {
-  x: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
-  y: [7, 17, 16, 19, 22, 21, 23, 25, 24, 25]
+  x: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+  y: [0, 7, 17, 16, 19, 22, 21, 23, 25, 24, 25]
 };
 
 const rawXMin = Math.min.apply(null, rawData.x);
@@ -70,8 +56,13 @@ const rawYMin = Math.min.apply(null, rawData.y);
 const rawYMax = Math.max.apply(null, rawData.y);
 const rawYRange = rawYMax - rawYMin;
 
-const plotRangeX = [rawXMin - rawXRange / 10, rawXMax + rawXRange / 10];
-const plotRangeY = [-10, 110];
+const fittedData = {
+  x: rawData.x.slice(1),
+  y: [] as number[]
+};
+
+const plotRangeX = [0, rawXMax + rawXRange / 10];
+const plotRangeY = [0, 110];
 
 const scatterData = {
   x: rawData.x,
@@ -93,17 +84,13 @@ let sigmoidYRange: number;
 
 const plotData = [
   {
-    x: scatterData.x,
-    y: scatterData.y,
+    x: scatterData.x.slice(1),
+    y: scatterData.y.slice(1),
     type: "scatter",
     mode: "markers",
     marker: {
       color: "#007dc3",
-      size: 10,
-      line: {
-        color: "black",
-        width: 1
-      }
+      size: 10
     }
   },
   {
@@ -223,10 +210,6 @@ let sigmoidParams: [number, number, number, number];
 
 let minThreshold = 0;
 
-const slider2Threshold = (value: number): number => {
-  return ((100 - minThreshold) / (points - 1)) * value + minThreshold;
-};
-
 const resetPlot = () => {
   sigmoidData.x = [];
   sigmoidData.y = [];
@@ -241,21 +224,16 @@ const resetPlot = () => {
   plotLayout.shapes[1].y1 = "";
 };
 
-const updatePlot = (targetThreshold: number): number => {
-  const threshold = sigmoidData.yScaled.reduce(function (prev, curr) {
-    return Math.abs(curr - targetThreshold) < Math.abs(prev - targetThreshold)
-      ? curr
-      : prev;
+const updatePlot = (value: number): number => {
+  const threshold: number = fittedData.y.reduce(function (prev, curr) {
+    return curr > value ? prev : curr;
   });
-  const index = sigmoidData.yScaled.indexOf(threshold);
-  const maxIntDur = rawXMin + index * step;
-  const intDur = scatterData.x.reduce(function (prev, curr) {
-    return curr > maxIntDur ? prev : curr;
-  });
+  const intDur = fittedData.x[fittedData.y.indexOf(threshold)];
   const signal = sigmoid(intDur, ...sigmoidParams);
   const scaledSignal = Math.round(
     ((signal - sigmoidYMin) / sigmoidYRange) * 100
   );
+
   plotLayout.xaxis2.tickvals = [intDur];
   plotLayout.xaxis2.ticktext = [intDur + "&mu;s"];
   plotLayout.yaxis2.tickvals = [signal];
@@ -264,6 +242,7 @@ const updatePlot = (targetThreshold: number): number => {
   plotLayout.shapes[0].x1 = intDur + "";
   plotLayout.shapes[1].y0 = signal + "";
   plotLayout.shapes[1].y1 = signal + "";
+
   return intDur;
 };
 
@@ -294,12 +273,15 @@ const initPlot = async () => {
         ((sigmoidData.y[i] - sigmoidYMin) / sigmoidYRange) * 100
       );
     }
-    minThreshold =
-      Math.floor(
-        ((sigmoid(scatterData.x[1], ...sigmoidParams) - sigmoidYMin) /
-          sigmoidYRange) *
-          100
-      ) - 1;
+    fittedData.x.forEach((item) => {
+      fittedData.y.push(
+        Math.round(
+          ((sigmoid(item, ...sigmoidParams) - sigmoidYMin) / sigmoidYRange) *
+            100
+        )
+      );
+    });
+    minThreshold = fittedData.y[0];
   } catch (error) {
     Promise.reject(error);
   }
@@ -311,6 +293,7 @@ export const Landing = (props: any): JSX.Element => {
   const [config, setConfig] = useState<any>({});
   const [frames, setFrames] = useState<any>([]);
   const [intDur, setIntDur] = useState<number | null>();
+  const [sliderMarks, setSliderMarks] = useState<any>([]);
   const [sliderValue, setSliderValue] = useState<number>(0);
   const [activeStep, setActiveStep] = useState<number>(0);
 
@@ -346,11 +329,30 @@ export const Landing = (props: any): JSX.Element => {
   };
 
   const handleSliderOnChange = (event: any) => {
-    const intDur = updatePlot(slider2Threshold(event.target.value));
-    setData([plotData[0], plotData[1]]);
-    setLayout(plotLayout);
-    setIntDur(intDur);
-    setSliderValue(event.target.value);
+    let threshold: number | undefined = undefined;
+    if (fittedData.y.includes(event.target.value)) {
+      threshold = event.target.value;
+    } else {
+      for (let i = 1; i <= 2; i++) {
+        threshold = fittedData.y
+          .slice()
+          .reverse()
+          .find((item) => Math.abs(item - event.target.value) <= i);
+        if (threshold) {
+          break;
+        }
+      }
+    }
+    if (threshold) {
+      const intDur = updatePlot(threshold);
+      setData([plotData[0], plotData[1]]);
+      setLayout(plotLayout);
+      setIntDur(intDur);
+      setSliderValue(threshold);
+      return;
+    } else {
+      setSliderValue(event.target.value);
+    }
   };
 
   useEffect(() => {
@@ -364,6 +366,11 @@ export const Landing = (props: any): JSX.Element => {
     const initialize = async () => {
       try {
         await initPlot();
+        setSliderMarks(
+          fittedData.y.map((item) => {
+            return { value: item };
+          })
+        );
         setData(plotData);
         setLayout(plotLayout);
         setConfig(plotConfig);
@@ -378,180 +385,132 @@ export const Landing = (props: any): JSX.Element => {
   }, []);
 
   return (
-    <>
-      <Stack spacing={2}>
-        <Box
-          sx={{
-            width: WIDTH + "px",
-            height: HEIGHT_TITLE + "px",
-            position: "relative",
-            bgcolor: "section.background"
-          }}
-        >
-          <Typography
-            variant="h5"
-            sx={{
-              position: "absolute",
-              top: "50%",
-              left: "50%",
-              transform: "translate(-50%, -50%)"
-            }}
-          >
-            Integration Duration
-          </Typography>
-          {showHelp && (
-            <Button
-              variant="text"
+    <Canvas title="Integration Duration">
+      <Content>
+        <Stack
+          spacing={contentAttrs.PANEL_SPACING}
+          direction="row"
+          divider={
+            <Divider
+              orientation="vertical"
+              flexItem
               sx={{
-                position: "absolute",
-                top: "50%",
-                left: "16px",
-                transform: "translate(0%, -50%)"
+                minHeight:
+                  CANVAS_ATTRS.MIN_HEIGHT_CONTENT -
+                  CANVAS_ATTRS.PADDING * 2 +
+                  "px"
               }}
-            >
-              <Typography variant="underline">Help</Typography>
-            </Button>
-          )}
-        </Box>
-        <Box
-          sx={{
-            width: WIDTH + "px",
-            minHeight: HEIGHT_CONTENT + "px",
-            boxSizing: "border-box",
-            padding: PADDING + "px",
-            position: "relative",
-            bgcolor: "section.background",
-            display: "flex"
-          }}
+            />
+          }
         >
-          <Stack
-            spacing={CONTENT_SPACING}
-            direction="row"
-            divider={<Divider orientation="vertical" flexItem />}
-          >
-            <div style={{ width: CONTENT_PANEL_WIDTH + "px" }}>
-              <Stepper
-                activeStep={activeStep}
-                orientation="vertical"
-                connector={<CustomStepConnector />}
-                sx={{
-                  "& .MuiStepIcon-root": {
-                    width: STEP_ICON_SIZE + "px",
-                    height: STEP_ICON_SIZE + "px"
-                  }
-                }}
-              >
-                {steps.map((step, index) => (
-                  <Step key={step.label}>
-                    <StepLabel>{step.label}</StepLabel>
-                  </Step>
-                ))}
-              </Stepper>
-            </div>
-            <div style={{ width: CONTENT_PANEL_WIDTH + "px" }}>
-              <Stack spacing={3} direction="column" alignItems="center">
-                <Plot
-                  data={data}
-                  layout={layout}
-                  frames={frames}
-                  config={config}
-                  onInitialized={(figure) => storeState(figure)}
-                  onUpdate={(figure) => storeState(figure)}
-                />
-                <div style={{ width: CONTENT_PANEL_WIDTH + "px" }}>
-                  <Stack spacing={1} direction="row">
-                    <Typography variant="body2" sx={{ paddingTop: "5px" }}>
-                      Threshold: {minThreshold}&nbsp;
-                    </Typography>
-                    <Slider
-                      size="small"
-                      max={points - 1}
-                      value={sliderValue}
-                      onChange={handleSliderOnChange}
-                    />
-                    <Typography variant="body2" sx={{ paddingTop: "5px" }}>
-                      &nbsp;100
-                    </Typography>
-                  </Stack>
-                </div>
-                <div style={{ alignSelf: "stretch" }}>
-                  <Typography variant="body2" sx={{ display: "inline-block" }}>
-                    Integration Duration:&nbsp;
+          <div style={{ width: contentAttrs.PANEL_WIDTH + "px" }}>
+            <VerticalStepper
+              steps={steps}
+              activeStep={activeStep}
+              onStepClick={(step) => {
+                setActiveStep(step);
+              }}
+            />
+          </div>
+          <div style={{ width: contentAttrs.PANEL_WIDTH + "px" }}>
+            <Stack spacing={3} direction="column" alignItems="center">
+              <Plot
+                data={data}
+                layout={layout}
+                frames={frames}
+                config={config}
+                onInitialized={(figure) => storeState(figure)}
+                onUpdate={(figure) => storeState(figure)}
+              />
+              <div style={{ width: contentAttrs.PANEL_WIDTH + "px" }}>
+                <Stack spacing={1} direction="row">
+                  <Typography variant="body2" sx={{ paddingTop: "5px" }}>
+                    Threshold: {minThreshold}&nbsp;
                   </Typography>
-                  <TextField
-                    variant="standard"
-                    value={intDur ? intDur : ""}
-                    inputProps={{ style: { textAlign: "center" } }}
-                    onChange={(event) =>
-                      handleIntDurInputChange(event.target.value)
-                    }
+                  <Slider
+                    size="small"
+                    min={minThreshold}
+                    max={100}
+                    marks={sliderMarks}
+                    value={sliderValue}
+                    onChange={handleSliderOnChange}
                     sx={{
-                      width: "18px",
-                      display: "inline-block",
-                      "& .MuiInput-root": {
-                        fontSize: "0.875rem"
-                      },
-                      "& .MuiInput-input": {
-                        padding: 0
+                      "& .MuiSlider-mark": {
+                        height: 8,
+                        backgroundColor: "divider",
+                        "&.MuiSlider-markActive": {
+                          opacity: 1,
+                          backgroundColor: "currentColor"
+                        }
                       }
                     }}
                   />
-                  <Typography variant="body2" sx={{ display: "inline-block" }}>
-                    &nbsp;&mu;s
+                  <Typography variant="body2" sx={{ paddingTop: "5px" }}>
+                    &nbsp;100
                   </Typography>
-                </div>
-              </Stack>
-            </div>
-          </Stack>
-        </Box>
-        <Box
+                </Stack>
+              </div>
+              <div style={{ alignSelf: "stretch" }}>
+                <Typography variant="body2" sx={{ display: "inline-block" }}>
+                  Integration Duration:&nbsp;
+                </Typography>
+                <TextField
+                  variant="standard"
+                  value={intDur ? intDur : ""}
+                  inputProps={{ style: { textAlign: "center" } }}
+                  onChange={(event) =>
+                    handleIntDurInputChange(event.target.value)
+                  }
+                  sx={{
+                    width: "18px",
+                    display: "inline-block",
+                    "& .MuiInput-root": {
+                      fontSize: "0.875rem"
+                    },
+                    "& .MuiInput-input": {
+                      padding: 0
+                    }
+                  }}
+                />
+                <Typography variant="body2" sx={{ display: "inline-block" }}>
+                  &nbsp;&mu;s
+                </Typography>
+              </div>
+            </Stack>
+          </div>
+        </Stack>
+      </Content>
+      <Controls
+        sx={{
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center"
+        }}
+      >
+        <Button sx={{ width: "150px" }}>Apply</Button>
+        <BackButton
+          disabled={activeStep === 0}
+          onClick={() => handleBackButtonClick()}
           sx={{
-            width: WIDTH + "px",
-            minHeight: HEIGHT_CONTROLS + "px",
-            boxSizing: "border-box",
-            padding: PADDING + "px",
-            position: "relative",
-            bgcolor: "section.background",
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "center"
+            position: "absolute",
+            top: "50%",
+            left: "24px",
+            transform: "translate(0%, -50%)"
           }}
-        >
-          <Button sx={{ width: "150px" }}>Apply</Button>
-          <Button
-            variant="text"
-            disabled={activeStep === 0}
-            onClick={() => handleBackButtonClick()}
-            sx={{
-              padding: 0,
-              position: "absolute",
-              top: "50%",
-              left: "24px",
-              transform: "translate(0%, -50%)"
-            }}
-          >
-            <KeyboardArrowLeft />
-            Back
-          </Button>
-          <Button
-            variant="text"
-            disabled={activeStep === steps.length - 1}
-            onClick={() => handleNextButtonClick()}
-            sx={{
-              padding: 0,
-              position: "absolute",
-              top: "50%",
-              right: "24px",
-              transform: "translate(0%, -50%)"
-            }}
-          >
-            Next
-            <KeyboardArrowRight />
-          </Button>
-        </Box>
-      </Stack>
-    </>
+        />
+        <NextButton
+          disabled={activeStep === steps.length - 1}
+          onClick={() => handleNextButtonClick()}
+          sx={{
+            position: "absolute",
+            top: "50%",
+            right: "24px",
+            transform: "translate(0%, -50%)"
+          }}
+        />
+      </Controls>
+    </Canvas>
   );
 };
 
