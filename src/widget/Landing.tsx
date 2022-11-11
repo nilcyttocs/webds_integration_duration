@@ -5,6 +5,8 @@ import Divider from "@mui/material/Divider";
 import Button from "@mui/material/Button";
 import Typography from "@mui/material/Typography";
 
+import LinearProgress from "@mui/material/LinearProgress";
+
 import Slider from "@mui/material/Slider";
 import TextField from "@mui/material/TextField";
 
@@ -25,6 +27,8 @@ import { VerticalStepper } from "./mui_extensions/Stepper";
 
 import { BackButton, NextButton } from "./mui_extensions/Button";
 
+import Step2 from "./right_panel/Step2";
+
 import { requestAPI } from "../handler";
 
 const contentAttrs: ContentAttrs = getContentAttrs();
@@ -34,13 +38,26 @@ const PLOT_HEIGHT = 300;
 
 const steps = [
   {
-    label: "Foo"
+    label: "Collect Baseline Data",
+    content: (
+      <Typography>
+        Baseline data is collected during this step. Do not touch sensor during
+        data collection. Click "Collect" button when ready.
+      </Typography>
+    )
   },
   {
-    label: "Collect Baseline"
+    label: "Collect Test Pixel Data",
+    content: (
+      <Typography>
+        Test pixel signal data is collected during this step. Place finger in
+        circled area on sensor and do not lift finger until data collection is
+        complete. Click "Collect" button when ready.
+      </Typography>
+    )
   },
   {
-    label: "Bar"
+    label: "Select Integration Duration"
   }
 ];
 
@@ -197,7 +214,6 @@ const plotLayout = {
       }
     }
   ],
-  hovermode: false,
   showlegend: false
 };
 
@@ -299,6 +315,13 @@ export const Landing = (props: any): JSX.Element => {
 
   const theme = useTheme();
 
+  const storeState = (figure: any) => {
+    setData(figure.data);
+    setLayout(figure.layout);
+    setConfig(figure.config);
+    setFrames(figure.frames);
+  };
+
   const handleIntDurInputChange = (value: string) => {
     if (value !== "" && isNaN(Number(value))) {
       return;
@@ -311,13 +334,6 @@ export const Landing = (props: any): JSX.Element => {
     if (num < 100) {
       setIntDur(num);
     }
-  };
-
-  const storeState = (figure: any) => {
-    setData(figure.data);
-    setLayout(figure.layout);
-    setConfig(figure.config);
-    setFrames(figure.frames);
   };
 
   const handleNextButtonClick = () => {
@@ -354,6 +370,98 @@ export const Landing = (props: any): JSX.Element => {
       setSliderValue(event.target.value);
     }
   };
+
+  const rightPanel: (JSX.Element | null)[] = [
+    <div
+      style={{
+        width: "100%",
+        height: "100%",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center"
+      }}
+    >
+      <div style={{ marginTop: "16px", position: "relative" }}>
+        <Button sx={{ width: "150px" }}>Collect</Button>
+        <LinearProgress sx={{ width: "150px", marginTop: "16px" }} />
+      </div>
+    </div>,
+    <Step2 />,
+    <Stack spacing={3} direction="column" alignItems="center">
+      <div style={{ position: "relative" }}>
+        <Plot
+          data={data}
+          layout={layout}
+          frames={frames}
+          config={config}
+          onInitialized={(figure) => storeState(figure)}
+          onUpdate={(figure) => storeState(figure)}
+        />
+        <div
+          style={{
+            position: "absolute",
+            top: 0,
+            bottom: 0,
+            left: 0,
+            right: 0,
+            background: "rgba(0, 0, 0, 0)"
+          }}
+        />
+      </div>
+      <div style={{ width: contentAttrs.PANEL_WIDTH + "px" }}>
+        <Stack spacing={1} direction="row">
+          <Typography variant="body2" sx={{ paddingTop: "5px" }}>
+            Threshold: {minThreshold}&nbsp;
+          </Typography>
+          <Slider
+            size="small"
+            min={minThreshold}
+            max={100}
+            marks={sliderMarks}
+            value={sliderValue}
+            onChange={handleSliderOnChange}
+            sx={{
+              "& .MuiSlider-mark": {
+                height: 8,
+                backgroundColor: "divider",
+                "&.MuiSlider-markActive": {
+                  opacity: 1,
+                  backgroundColor: "currentColor"
+                }
+              }
+            }}
+          />
+          <Typography variant="body2" sx={{ paddingTop: "5px" }}>
+            &nbsp;100
+          </Typography>
+        </Stack>
+      </div>
+      <div style={{ alignSelf: "stretch" }}>
+        <Typography variant="body2" sx={{ display: "inline-block" }}>
+          Integration Duration:&nbsp;
+        </Typography>
+        <TextField
+          variant="standard"
+          value={intDur ? intDur : ""}
+          inputProps={{ style: { textAlign: "center" } }}
+          onChange={(event) => handleIntDurInputChange(event.target.value)}
+          sx={{
+            width: "18px",
+            display: "inline-block",
+            "& .MuiInput-root": {
+              fontSize: "0.875rem"
+            },
+            "& .MuiInput-input": {
+              padding: 0
+            }
+          }}
+        />
+        <Typography variant="body2" sx={{ display: "inline-block" }}>
+          &nbsp;&mu;s
+        </Typography>
+      </div>
+    </Stack>
+  ];
 
   useEffect(() => {
     plotLayout.plot_bgcolor = theme.palette.mode === "light" ? "#fff" : "#000";
@@ -403,7 +511,16 @@ export const Landing = (props: any): JSX.Element => {
             />
           }
         >
-          <div style={{ width: contentAttrs.PANEL_WIDTH + "px" }}>
+          <div
+            style={{
+              width: contentAttrs.PANEL_WIDTH + "px",
+              minHeight:
+                CANVAS_ATTRS.MIN_HEIGHT_CONTENT -
+                CANVAS_ATTRS.PADDING * 2 +
+                "px",
+              position: "relative"
+            }}
+          >
             <VerticalStepper
               steps={steps}
               activeStep={activeStep}
@@ -412,71 +529,17 @@ export const Landing = (props: any): JSX.Element => {
               }}
             />
           </div>
-          <div style={{ width: contentAttrs.PANEL_WIDTH + "px" }}>
-            <Stack spacing={3} direction="column" alignItems="center">
-              <Plot
-                data={data}
-                layout={layout}
-                frames={frames}
-                config={config}
-                onInitialized={(figure) => storeState(figure)}
-                onUpdate={(figure) => storeState(figure)}
-              />
-              <div style={{ width: contentAttrs.PANEL_WIDTH + "px" }}>
-                <Stack spacing={1} direction="row">
-                  <Typography variant="body2" sx={{ paddingTop: "5px" }}>
-                    Threshold: {minThreshold}&nbsp;
-                  </Typography>
-                  <Slider
-                    size="small"
-                    min={minThreshold}
-                    max={100}
-                    marks={sliderMarks}
-                    value={sliderValue}
-                    onChange={handleSliderOnChange}
-                    sx={{
-                      "& .MuiSlider-mark": {
-                        height: 8,
-                        backgroundColor: "divider",
-                        "&.MuiSlider-markActive": {
-                          opacity: 1,
-                          backgroundColor: "currentColor"
-                        }
-                      }
-                    }}
-                  />
-                  <Typography variant="body2" sx={{ paddingTop: "5px" }}>
-                    &nbsp;100
-                  </Typography>
-                </Stack>
-              </div>
-              <div style={{ alignSelf: "stretch" }}>
-                <Typography variant="body2" sx={{ display: "inline-block" }}>
-                  Integration Duration:&nbsp;
-                </Typography>
-                <TextField
-                  variant="standard"
-                  value={intDur ? intDur : ""}
-                  inputProps={{ style: { textAlign: "center" } }}
-                  onChange={(event) =>
-                    handleIntDurInputChange(event.target.value)
-                  }
-                  sx={{
-                    width: "18px",
-                    display: "inline-block",
-                    "& .MuiInput-root": {
-                      fontSize: "0.875rem"
-                    },
-                    "& .MuiInput-input": {
-                      padding: 0
-                    }
-                  }}
-                />
-                <Typography variant="body2" sx={{ display: "inline-block" }}>
-                  &nbsp;&mu;s
-                </Typography>
-              </div>
-            </Stack>
+          <div
+            style={{
+              width: contentAttrs.PANEL_WIDTH + "px",
+              minHeight:
+                CANVAS_ATTRS.MIN_HEIGHT_CONTENT -
+                CANVAS_ATTRS.PADDING * 2 +
+                "px",
+              position: "relative"
+            }}
+          >
+            {rightPanel[activeStep]}
           </div>
         </Stack>
       </Content>
@@ -488,7 +551,6 @@ export const Landing = (props: any): JSX.Element => {
           justifyContent: "center"
         }}
       >
-        <Button sx={{ width: "150px" }}>Apply</Button>
         <BackButton
           disabled={activeStep === 0}
           onClick={() => handleBackButtonClick()}

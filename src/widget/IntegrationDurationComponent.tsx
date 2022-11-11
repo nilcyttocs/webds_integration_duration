@@ -8,21 +8,49 @@ import { ThemeProvider } from "@mui/material/styles";
 
 import Landing from "./Landing";
 
+import { requestAPI } from "../handler";
+
+export type ContextData = {
+  numRows: number;
+  numCols: number;
+};
+
+export const Context = React.createContext({} as ContextData);
+
 let alertMessage = "";
+
+const alertMessageAppInfo = "Failed to read application info from device.";
 
 export const IntegrationDurationComponent = (props: any): JSX.Element => {
   const [initialized, setInitialized] = useState<boolean>(false);
   const [alert, setAlert] = useState<boolean>(false);
+  const [colsRows, setColsRows] = useState<[number, number]>([0, 0]);
 
   useEffect(() => {
     const initialize = async () => {
+      const dataToSend: any = {
+        command: "getAppInfo"
+      };
+      try {
+        const response = await requestAPI<any>("command", {
+          body: JSON.stringify(dataToSend),
+          method: "POST"
+        });
+        if (response.numCols && response.numRows) {
+          setColsRows([response.numCols, response.numRows]);
+        }
+      } catch (error) {
+        console.error(`Error - POST /webds/command\n${dataToSend}\n${error}`);
+        alertMessage = alertMessageAppInfo;
+        setAlert(true);
+        return;
+      }
       setInitialized(true);
     };
     initialize();
   }, []);
 
   const webdsTheme = props.service.ui.getWebDSTheme();
-  const jpFontColor = props.service.ui.getJupyterFontColor();
 
   return (
     <>
@@ -38,7 +66,11 @@ export const IntegrationDurationComponent = (props: any): JSX.Element => {
             </Alert>
           )}
           {initialized && (
-            <Landing theme={webdsTheme.palette.mode} fontColor={jpFontColor} />
+            <Context.Provider
+              value={{ numRows: colsRows[1], numCols: colsRows[0] }}
+            >
+              <Landing />
+            </Context.Provider>
           )}
         </div>
         {!initialized && (
