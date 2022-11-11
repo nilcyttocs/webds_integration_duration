@@ -40,7 +40,7 @@ const steps = [
   {
     label: "Collect Baseline Data",
     content: (
-      <Typography>
+      <Typography variant="body2">
         Baseline data is collected during this step. Do not touch sensor during
         data collection. Click "Collect" button when ready.
       </Typography>
@@ -49,7 +49,7 @@ const steps = [
   {
     label: "Collect Test Pixel Data",
     content: (
-      <Typography>
+      <Typography variant="body2">
         Test pixel signal data is collected during this step. Place finger in
         circled area on sensor and do not lift finger until data collection is
         complete. Click "Collect" button when ready.
