@@ -283,7 +283,7 @@ export const Landing = (props: any): JSX.Element => {
     });
   };
 
-  const handleCollectOnClick = async (step: number) => {
+  const handleCollectButtonClick = async (step: number) => {
     switch (step) {
       case 1:
         setProgress1(0);
@@ -316,15 +316,15 @@ export const Landing = (props: any): JSX.Element => {
     }
   };
 
-  const handleDoneOnClick = (step: number) => {
+  const handleDoneButtonClick = (step: number) => {
     handleNextButtonClick();
   };
 
-  const handleResetOnClick = (step: number) => {
+  const handleResetButtonClick = (step: number) => {
     prepareStep(step);
   };
 
-  const handleCancelOnClick = async (step: number) => {
+  const handleCancelButtonClick = async (step: number) => {
     try {
       await postRequest("cancel_data_collection");
     } catch (error) {
@@ -333,7 +333,7 @@ export const Landing = (props: any): JSX.Element => {
     }
   };
 
-  const handleWriteConfigOnClick = async (commit: boolean) => {
+  const handleWriteConfigButtonClick = async (commit: boolean) => {
     const entries = CONFIG_ENTRIES.map((item, index) => {
       const value = props.configValues[index];
       switch (index) {
@@ -397,16 +397,16 @@ export const Landing = (props: any): JSX.Element => {
           <ProgressButton
             progress={progress1}
             onClick={() => {
-              handleCollectOnClick(1);
+              handleCollectButtonClick(1);
             }}
             onDoneClick={() => {
-              handleDoneOnClick(1);
+              handleDoneButtonClick(1);
             }}
             onResetClick={() => {
-              handleResetOnClick(1);
+              handleResetButtonClick(1);
             }}
             onCancelClick={() => {
-              handleCancelOnClick(1);
+              handleCancelButtonClick(1);
             }}
             sx={{ margin: "16px 0px" }}
           >
@@ -442,16 +442,16 @@ export const Landing = (props: any): JSX.Element => {
             disabled={!stepsCompleted.includes(1)}
             progress={progress2}
             onClick={() => {
-              handleCollectOnClick(2);
+              handleCollectButtonClick(2);
             }}
             onDoneClick={() => {
-              handleDoneOnClick(2);
+              handleDoneButtonClick(2);
             }}
             onResetClick={() => {
-              handleResetOnClick(2);
+              handleResetButtonClick(2);
             }}
             onCancelClick={() => {
-              handleCancelOnClick(2);
+              handleCancelButtonClick(2);
             }}
             sx={{ margin: "16px 0px" }}
           >
@@ -502,7 +502,7 @@ export const Landing = (props: any): JSX.Element => {
                 (intDur === current && writtenToRAM) ||
                 ![1, 2].every((item) => stepsCompleted.indexOf(item) !== -1)
               }
-              onClick={() => handleWriteConfigOnClick(false)}
+              onClick={() => handleWriteConfigButtonClick(false)}
               sx={{ width: "125px" }}
             >
               Write to RAM
@@ -513,7 +513,7 @@ export const Landing = (props: any): JSX.Element => {
                 (intDur === current && writtenToFlash) ||
                 ![1, 2].every((item) => stepsCompleted.indexOf(item) !== -1)
               }
-              onClick={() => handleWriteConfigOnClick(true)}
+              onClick={() => handleWriteConfigButtonClick(true)}
               sx={{ width: "125px" }}
             >
               Write to Flash

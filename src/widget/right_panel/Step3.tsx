@@ -242,13 +242,13 @@ export const Step3 = (props: any): JSX.Element => {
     }
   };
 
-  const handleOptimumButtonOnClick = (intDur: number) => {
+  const handleOptimumButtonClick = (intDur: number) => {
     updatePlot(intDur);
     setIntDur(intDur);
     setSliderValue(intDur);
   };
 
-  const handleSliderOnChange = (event: any) => {
+  const handleSliderChange = (event: any) => {
     updatePlot(event.target.value);
     setIntDur(event.target.value);
     setSliderValue(event.target.value);
@@ -378,7 +378,7 @@ export const Step3 = (props: any): JSX.Element => {
               variant="outlined"
               disabled={props.modelParams === undefined}
               onClick={() => {
-                handleOptimumButtonOnClick(props.modelParams.optimalIntDur[0]);
+                handleOptimumButtonClick(props.modelParams.optimalIntDur[0]);
               }}
               sx={{ width: " 100px", padding: "2px 5px" }}
             >
@@ -406,7 +406,7 @@ export const Step3 = (props: any): JSX.Element => {
                 min={0}
                 max={MAX_X_RANGE - 1}
                 value={sliderValue}
-                onChange={handleSliderOnChange}
+                onChange={handleSliderChange}
               />
               <Typography variant="body2" sx={{ paddingTop: "5px" }}>
                 &nbsp;{MAX_X_RANGE - 1}
