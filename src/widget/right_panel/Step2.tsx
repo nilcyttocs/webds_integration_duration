@@ -90,7 +90,7 @@ export const Step2 = (props: any): JSX.Element => {
                         !props.disabled &&
                         props.inProgress &&
                         index === props.testPixel
-                          ? "red"
+                          ? theme.palette.primary.main
                           : theme.palette.text.disabled
                     }}
                   >

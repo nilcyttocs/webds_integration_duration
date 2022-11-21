@@ -24,8 +24,12 @@ import {
   ALERT_MESSAGE_TUNING_TEST_PIXEL_DATA,
   ALERT_MESSAGE_TUNING_RESULTS,
   ALERT_MESSAGE_TUNING_CANCEL,
+  ALERT_MESSAGE_WRITE_TO_FLASH,
+  ALERT_MESSAGE_WRITE_TO_RAM,
   EVENT_NAME,
-  STEPPER_STEPS
+  STEPPER_STEPS,
+  CONFIG_ENTRIES,
+  CONFIG_PARAMS
 } from "./constants";
 
 import { ContextData, Context } from "./local_exports";
@@ -113,6 +117,7 @@ const postRequest = async (request: string, args?: any[]) => {
 
 export const Landing = (props: any): JSX.Element => {
   const [intDur, setIntDur] = useState<number | undefined>();
+  const [current, setCurrent] = useState<number>();
   const [activeStep, setActiveStep] = useState<number>(1);
   const [stepsCompleted, setStepsCompleted] = useState<number[]>([]);
   const [progress1, setProgress1] = useState<number | undefined>(undefined);
@@ -121,6 +126,8 @@ export const Landing = (props: any): JSX.Element => {
   const [testPixelInProgress, setTestPixelInProgress] = useState<boolean>(true);
   const [testPixelPauseResume, setTestPixelPauseResume] = useState<string>("");
   const [modelParams, setModelParams] = useState<ModelParams | undefined>();
+  const [writtenToRAM, setWrittenToRAM] = useState<boolean>(true);
+  const [writtenToFlash, setWrittenToFlash] = useState<boolean>(true);
 
   const contextData: ContextData = useContext(Context);
 
@@ -326,6 +333,40 @@ export const Landing = (props: any): JSX.Element => {
     }
   };
 
+  const handleWriteConfigOnClick = async (commit: boolean) => {
+    const entries = CONFIG_ENTRIES.map((item, index) => {
+      const value = props.configValues[index];
+      switch (index) {
+        case 0:
+          value[CONFIG_PARAMS.SFTYPE_TRANS] = intDur;
+          break;
+        case 1:
+          value[CONFIG_PARAMS.STRETCH_INDEX] =
+            intDur! >= CONFIG_PARAMS.INT_DUR_FLOOR
+              ? 0
+              : CONFIG_PARAMS.INT_DUR_FLOOR - intDur!;
+          break;
+        case 2:
+          value[CONFIG_PARAMS.STRETCH_INDEX] = CONFIG_PARAMS.ISTRETCH_DUR;
+          break;
+        default:
+          break;
+      }
+      return { name: item, value: value };
+    });
+    try {
+      await props.touchcomm.writeStaticConfig(entries, commit);
+    } catch (error) {
+      console.error(error);
+      props.showAlert(
+        commit ? ALERT_MESSAGE_WRITE_TO_FLASH : ALERT_MESSAGE_WRITE_TO_RAM
+      );
+    }
+    setCurrent(intDur);
+    setWrittenToRAM(true);
+    setWrittenToFlash(commit);
+  };
+
   const rightPanel: (JSX.Element | null)[] = [
     <Step1 />,
     <Step2
@@ -335,7 +376,7 @@ export const Landing = (props: any): JSX.Element => {
       inProgress={testPixelInProgress}
       pauseResume={testPixelPauseResume}
     />,
-    <Step3 modelParams={modelParams} setIntDur={setIntDur} />
+    <Step3 modelParams={modelParams} setIntDur={setIntDur} current={current} />
   ];
 
   const steps = [
@@ -457,18 +498,22 @@ export const Landing = (props: any): JSX.Element => {
           >
             <Button
               disabled={
-                ![1, 2].every((item) => stepsCompleted.indexOf(item) !== -1) ||
-                intDur === undefined
+                intDur === undefined ||
+                (intDur === current && writtenToRAM) ||
+                ![1, 2].every((item) => stepsCompleted.indexOf(item) !== -1)
               }
+              onClick={() => handleWriteConfigOnClick(false)}
               sx={{ width: "125px" }}
             >
               Write to RAM
             </Button>
             <Button
               disabled={
-                ![1, 2].every((item) => stepsCompleted.indexOf(item) !== -1) ||
-                intDur === undefined
+                intDur === undefined ||
+                (intDur === current && writtenToFlash) ||
+                ![1, 2].every((item) => stepsCompleted.indexOf(item) !== -1)
               }
+              onClick={() => handleWriteConfigOnClick(true)}
               sx={{ width: "125px" }}
             >
               Write to Flash
@@ -483,12 +528,6 @@ export const Landing = (props: any): JSX.Element => {
   ];
 
   useEffect(() => {
-    return () => {
-      removeEvent();
-    };
-  }, []);
-
-  useEffect(() => {
     const initialize = async () => {
       try {
         await postRequest("initialize", [testPixels]);
@@ -498,7 +537,6 @@ export const Landing = (props: any): JSX.Element => {
         return;
       }
     };
-
     const numRows = contextData.numRows;
     const numCols = contextData.numCols;
     const txOnYAxis = contextData.txOnYAxis;
@@ -513,9 +551,12 @@ export const Landing = (props: any): JSX.Element => {
       testPixels[2].pixel = { rx: numRows - 1, tx: numCols - 1 };
       testPixels[3].pixel = { rx: numRows - 1, tx: 0 };
     }
-
     initialize();
-  }, [contextData.numRows, contextData.numCols, contextData.txOnYAxis]);
+    setCurrent(props.configValues[0][CONFIG_PARAMS.SFTYPE_TRANS]);
+    return () => {
+      removeEvent();
+    };
+  }, []);
 
   return (
     <Canvas title="Integration Duration">

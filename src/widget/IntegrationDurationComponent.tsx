@@ -12,7 +12,7 @@ import {
   ALERT_MESSAGE_APP_INFO,
   ALERT_MESSAGE_STATIC_CONFIG,
   ALERT_MESSAGE_STATIC_CONFIG_ENTRIES,
-  STATIC_CONFIG_ENTRIES
+  CONFIG_ENTRIES
 } from "./constants";
 
 import { requestAPI } from "../handler";
@@ -32,6 +32,7 @@ export const IntegrationDurationComponent = (props: any): JSX.Element => {
   const [alert, setAlert] = useState<boolean>(false);
   const [colsRows, setColsRows] = useState<[number, number]>([0, 0]);
   const [txOnYAxis, setTxOnYAxis] = useState<boolean>(true);
+  const [configValues, setConfigValues] = useState<any[]>([]);
 
   const showAlert = (message: string) => {
     alertMessage = message;
@@ -40,7 +41,7 @@ export const IntegrationDurationComponent = (props: any): JSX.Element => {
 
   useEffect(() => {
     const initialize = async () => {
-      let dataToSend: any = {
+      const dataToSend: any = {
         command: "getAppInfo"
       };
       try {
@@ -56,23 +57,18 @@ export const IntegrationDurationComponent = (props: any): JSX.Element => {
         showAlert(ALERT_MESSAGE_APP_INFO);
         return;
       }
-      dataToSend = {
-        command: "getStaticConfig"
-      };
       try {
-        const response = await requestAPI<any>("command", {
-          body: JSON.stringify(dataToSend),
-          method: "POST"
-        });
-        if (!STATIC_CONFIG_ENTRIES.every((item) => item in response)) {
+        const config = await props.service.touchcomm.readStaticConfig();
+        if (!CONFIG_ENTRIES.every((item) => item in config)) {
           showAlert(ALERT_MESSAGE_STATIC_CONFIG_ENTRIES);
           return;
         }
-        if (response.txAxis) {
-          setTxOnYAxis(!!response.txAxis);
+        setConfigValues(CONFIG_ENTRIES.map((item) => config[item]));
+        if (config.txAxis) {
+          setTxOnYAxis(!!config.txAxis);
         }
       } catch (error) {
-        console.error(`Error - POST /webds/command\n${dataToSend}\n${error}`);
+        console.error(error);
         showAlert(ALERT_MESSAGE_STATIC_CONFIG);
         return;
       }
@@ -104,7 +100,11 @@ export const IntegrationDurationComponent = (props: any): JSX.Element => {
                 txOnYAxis: txOnYAxis
               }}
             >
-              <Landing showAlert={showAlert} />
+              <Landing
+                showAlert={showAlert}
+                configValues={configValues}
+                touchcomm={props.service.touchcomm}
+              />
             </Context.Provider>
           )}
         </div>

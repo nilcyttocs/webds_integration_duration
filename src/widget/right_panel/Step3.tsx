@@ -242,7 +242,7 @@ export const Step3 = (props: any): JSX.Element => {
     }
   };
 
-  const handleOptimumButtonClick = (intDur: number) => {
+  const handleOptimumButtonOnClick = (intDur: number) => {
     updatePlot(intDur);
     setIntDur(intDur);
     setSliderValue(intDur);
@@ -362,22 +362,38 @@ export const Step3 = (props: any): JSX.Element => {
                 fontSize: "0.65rem"
               }}
             >
-              &nbsp;TAC clock periods
+              &nbsp;(TAC clock periods)
             </Typography>
           </div>
-          <div style={{ marginTop: "16px", alignSelf: "stretch" }}>
+          <div
+            style={{
+              marginTop: "16px",
+              alignSelf: "stretch",
+              display: "flex",
+              flexDirection: "row",
+              alignItems: "center"
+            }}
+          >
             <Button
               variant="outlined"
               disabled={props.modelParams === undefined}
               onClick={() => {
-                handleOptimumButtonClick(props.modelParams.optimalIntDur[0]);
+                handleOptimumButtonOnClick(props.modelParams.optimalIntDur[0]);
               }}
-              sx={{ padding: "2px 5px" }}
+              sx={{ width: " 100px", padding: "2px 5px" }}
             >
               <Typography variant="body2">
                 Optimum: {props.modelParams?.optimalIntDur[0]}
               </Typography>
             </Button>
+            <Typography
+              variant="body2"
+              sx={{
+                fontSize: "0.65rem"
+              }}
+            >
+              &nbsp;(current setting on device: {props.current})
+            </Typography>
           </div>
           <div style={{ width: "100%", marginTop: "16px" }}>
             <Stack spacing={1} direction="row">

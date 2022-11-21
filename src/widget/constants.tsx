@@ -5,7 +5,13 @@ export const ALERT_MESSAGE_STATIC_CONFIG =
   "Failed to read static config from device.";
 
 export const ALERT_MESSAGE_STATIC_CONFIG_ENTRIES =
-  "Failed to located required static config entries. Please ensure running firmware supports integration duration tuning.";
+  "Failed to locate required static config entries. Please ensure device and running firmware support integration duration tuning.";
+
+export const ALERT_MESSAGE_WRITE_TO_RAM =
+  "Failed to write integration duration to RAM";
+
+export const ALERT_MESSAGE_WRITE_TO_FLASH =
+  "Failed to write integration duration to flash";
 
 export const ALERT_MESSAGE_TUNING_INITIALIZATION =
   "Faled to initialize tuning process.";
@@ -21,11 +27,18 @@ export const ALERT_MESSAGE_TUNING_RESULTS =
 
 export const ALERT_MESSAGE_TUNING_CANCEL = " Failed to cancel data collection";
 
-export const STATIC_CONFIG_ENTRIES = [
+export const CONFIG_ENTRIES = [
   "integDur",
-  "freqTable[0].stretchDur",
-  "freqTable[0].rstretchDur"
+  "freqTable[0].rstretchDur",
+  "freqTable[0].stretchDur"
 ];
+
+export const CONFIG_PARAMS = {
+  SFTYPE_TRANS: 2,
+  ISTRETCH_DUR: 5,
+  STRETCH_INDEX: 0,
+  INT_DUR_FLOOR: 10
+};
 
 export const EVENT_NAME = "integration_duration";
 
