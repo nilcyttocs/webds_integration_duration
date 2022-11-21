@@ -8,27 +8,39 @@ import { ThemeProvider } from "@mui/material/styles";
 
 import Landing from "./Landing";
 
+import {
+  ALERT_MESSAGE_APP_INFO,
+  ALERT_MESSAGE_STATIC_CONFIG,
+  ALERT_MESSAGE_STATIC_CONFIG_ENTRIES,
+  STATIC_CONFIG_ENTRIES
+} from "./constants";
+
 import { requestAPI } from "../handler";
 
 export type ContextData = {
   numRows: number;
   numCols: number;
+  txOnYAxis: boolean;
 };
 
 export const Context = React.createContext({} as ContextData);
 
 let alertMessage = "";
 
-const alertMessageAppInfo = "Failed to read application info from device.";
-
 export const IntegrationDurationComponent = (props: any): JSX.Element => {
   const [initialized, setInitialized] = useState<boolean>(false);
   const [alert, setAlert] = useState<boolean>(false);
   const [colsRows, setColsRows] = useState<[number, number]>([0, 0]);
+  const [txOnYAxis, setTxOnYAxis] = useState<boolean>(true);
+
+  const showAlert = (message: string) => {
+    alertMessage = message;
+    setAlert(true);
+  };
 
   useEffect(() => {
     const initialize = async () => {
-      const dataToSend: any = {
+      let dataToSend: any = {
         command: "getAppInfo"
       };
       try {
@@ -41,8 +53,27 @@ export const IntegrationDurationComponent = (props: any): JSX.Element => {
         }
       } catch (error) {
         console.error(`Error - POST /webds/command\n${dataToSend}\n${error}`);
-        alertMessage = alertMessageAppInfo;
-        setAlert(true);
+        showAlert(ALERT_MESSAGE_APP_INFO);
+        return;
+      }
+      dataToSend = {
+        command: "getStaticConfig"
+      };
+      try {
+        const response = await requestAPI<any>("command", {
+          body: JSON.stringify(dataToSend),
+          method: "POST"
+        });
+        if (!STATIC_CONFIG_ENTRIES.every((item) => item in response)) {
+          showAlert(ALERT_MESSAGE_STATIC_CONFIG_ENTRIES);
+          return;
+        }
+        if (response.txAxis) {
+          setTxOnYAxis(!!response.txAxis);
+        }
+      } catch (error) {
+        console.error(`Error - POST /webds/command\n${dataToSend}\n${error}`);
+        showAlert(ALERT_MESSAGE_STATIC_CONFIG);
         return;
       }
       setInitialized(true);
@@ -67,9 +98,13 @@ export const IntegrationDurationComponent = (props: any): JSX.Element => {
           )}
           {initialized && (
             <Context.Provider
-              value={{ numRows: colsRows[1], numCols: colsRows[0] }}
+              value={{
+                numRows: colsRows[1],
+                numCols: colsRows[0],
+                txOnYAxis: txOnYAxis
+              }}
             >
-              <Landing />
+              <Landing showAlert={showAlert} />
             </Context.Provider>
           )}
         </div>

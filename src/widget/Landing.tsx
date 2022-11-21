@@ -1,18 +1,11 @@
-import React, { useEffect, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 
 import Stack from "@mui/material/Stack";
 import Divider from "@mui/material/Divider";
 import Button from "@mui/material/Button";
 import Typography from "@mui/material/Typography";
 
-import LinearProgress from "@mui/material/LinearProgress";
-
-import Slider from "@mui/material/Slider";
-import TextField from "@mui/material/TextField";
-
 import { useTheme } from "@mui/material/styles";
-
-import Plot from "react-plotly.js";
 
 import { Canvas } from "./mui_extensions/Canvas";
 import { Content } from "./mui_extensions/Content";
@@ -25,472 +18,504 @@ import {
 
 import { VerticalStepper } from "./mui_extensions/Stepper";
 
-import { BackButton, NextButton } from "./mui_extensions/Button";
+import {
+  ALERT_MESSAGE_TUNING_INITIALIZATION,
+  ALERT_MESSAGE_TUNING_BASELINE_DATA,
+  ALERT_MESSAGE_TUNING_TEST_PIXEL_DATA,
+  ALERT_MESSAGE_TUNING_RESULTS,
+  ALERT_MESSAGE_TUNING_CANCEL,
+  EVENT_NAME,
+  STEPPER_STEPS
+} from "./constants";
 
+import { ContextData, Context } from "./local_exports";
+
+import {
+  BackButton,
+  NextButton,
+  ProgressButton
+} from "./mui_extensions/Button";
+
+import Step1 from "./right_panel/Step1";
 import Step2 from "./right_panel/Step2";
+import Step3 from "./right_panel/Step3";
 
 import { requestAPI } from "../handler";
 
+const SSE_CLOSED = 2;
+
 const contentAttrs: ContentAttrs = getContentAttrs();
 
-const PLOT_WIDTH = contentAttrs.PANEL_WIDTH;
-const PLOT_HEIGHT = 300;
+type ModelParams = {
+  tau: number;
+  bigA: number | null;
+  bigD: number | null;
+  minimumIntDur: number;
+  optimalIntDur: [number, boolean];
+};
 
-const steps = [
+let eventSource: EventSource | undefined = undefined;
+
+const testPixels = [
   {
-    label: "Collect Baseline Data",
-    content: (
-      <Typography variant="body2">
-        Baseline data is collected during this step. Do not touch sensor during
-        data collection. Click "Collect" button when ready.
-      </Typography>
-    )
+    pixel: {},
+    circle: {
+      bottom: 0,
+      left: 0,
+      transform: "translate(-35%, 35%)"
+    }
   },
   {
-    label: "Collect Test Pixel Data",
-    content: (
-      <Typography variant="body2">
-        Test pixel signal data is collected during this step. Place finger in
-        circled area on sensor and do not lift finger until data collection is
-        complete. Click "Collect" button when ready.
-      </Typography>
-    )
+    pixel: {},
+    circle: {
+      top: 0,
+      left: 0,
+      transform: "translate(-35%, -35%)"
+    }
   },
   {
-    label: "Select Integration Duration"
+    pixel: {},
+    circle: {
+      top: 0,
+      right: 0,
+      transform: "translate(35%, -35%)"
+    }
+  },
+  {
+    pixel: {},
+    circle: {
+      bottom: 0,
+      right: 0,
+      transform: "translate(35%, 35%)"
+    }
   }
 ];
 
-const rawData = {
-  x: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
-  y: [0, 7, 17, 16, 19, 22, 21, 23, 25, 24, 25]
-};
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-const rawXMin = Math.min.apply(null, rawData.x);
-const rawXMax = Math.max.apply(null, rawData.x);
-const rawXRange = rawXMax - rawXMin;
-const rawYMin = Math.min.apply(null, rawData.y);
-const rawYMax = Math.max.apply(null, rawData.y);
-const rawYRange = rawYMax - rawYMin;
-
-const fittedData = {
-  x: rawData.x.slice(1),
-  y: [] as number[]
-};
-
-const plotRangeX = [0, rawXMax + rawXRange / 10];
-const plotRangeY = [0, 110];
-
-const scatterData = {
-  x: rawData.x,
-  y: rawData.y.map((item: number) => ((item - rawYMin) / rawYRange) * 100)
-};
-
-const points = 500;
-const step = (rawXMax - rawXMin) / (points - 1);
-
-const sigmoidData = {
-  x: [] as number[],
-  y: [] as number[],
-  yScaled: [] as number[]
-};
-
-let sigmoidYMin: number;
-let sigmoidYMax: number;
-let sigmoidYRange: number;
-
-const plotData = [
-  {
-    x: scatterData.x.slice(1),
-    y: scatterData.y.slice(1),
-    type: "scatter",
-    mode: "markers",
-    marker: {
-      color: "#007dc3",
-      size: 10
-    }
-  },
-  {
-    xaxis: "x2",
-    yaxis: "y2",
-    x: sigmoidData.x,
-    y: sigmoidData.y,
-    type: "scatter",
-    line: { shape: "spline" }
-  }
-];
-
-const plotConfig = { displayModeBar: false };
-
-const plotLayout = {
-  width: PLOT_WIDTH,
-  height: PLOT_HEIGHT,
-  margin: {
-    l: 24,
-    r: 36,
-    t: 16,
-    b: 24
-  },
-  font: {
-    color: ""
-  },
-  plot_bgcolor: "",
-  paper_bgcolor: "rgba(0, 0, 0, 0)",
-  xaxis: {
-    title: "Integration Duration",
-    range: plotRangeX,
-    fixedrange: true,
-    zeroline: false,
-    showline: true,
-    showgrid: false,
-    showticklabels: false
-  },
-  xaxis2: {
-    overlaying: "x",
-    side: "top",
-    range: plotRangeX,
-    fixedrange: true,
-    zeroline: false,
-    showline: true,
-    showgrid: false,
-    showticklabels: true,
-    tickmode: "array",
-    tickvals: [] as number[],
-    ticktext: [] as string[],
-    tickfont: {
-      size: 10
-    }
-  },
-  yaxis: {
-    title: "Signal",
-    range: plotRangeY,
-    fixedrange: true,
-    zeroline: false,
-    showline: true,
-    showgrid: false,
-    showticklabels: false
-  },
-  yaxis2: {
-    overlaying: "y",
-    range: plotRangeY,
-    fixedrange: true,
-    side: "right",
-    zeroline: false,
-    showline: true,
-    showgrid: false,
-    showticklabels: true,
-    tickmode: "array",
-    tickvals: [] as number[],
-    ticktext: [] as string[],
-    tickfont: {
-      size: 10
-    }
-  },
-  shapes: [
-    {
-      type: "line",
-      yref: "paper",
-      x0: "",
-      x1: "",
-      y0: 0,
-      y1: 1,
-      line: {
-        color: "grey",
-        width: 1,
-        dash: "dot"
-      }
-    },
-    {
-      type: "line",
-      xref: "paper",
-      x0: 0,
-      x1: 1,
-      y0: "",
-      y1: "",
-      line: {
-        color: "grey",
-        width: 1,
-        dash: "dot"
-      }
-    }
-  ],
-  showlegend: false
-};
-
-const sigmoid = (x: number, L: number, x0: number, k: number, b: number) => {
-  const y = L / (1 + Math.exp(-k * (x - x0))) + b;
-  return y;
-};
-
-let sigmoidParams: [number, number, number, number];
-
-let minThreshold = 0;
-
-const resetPlot = () => {
-  sigmoidData.x = [];
-  sigmoidData.y = [];
-  sigmoidData.yScaled = [];
-  plotLayout.xaxis2.tickvals = [];
-  plotLayout.xaxis2.ticktext = [];
-  plotLayout.yaxis2.tickvals = [];
-  plotLayout.yaxis2.ticktext = [];
-  plotLayout.shapes[0].x0 = "";
-  plotLayout.shapes[0].x1 = "";
-  plotLayout.shapes[1].y0 = "";
-  plotLayout.shapes[1].y1 = "";
-};
-
-const updatePlot = (value: number): number => {
-  const threshold: number = fittedData.y.reduce(function (prev, curr) {
-    return curr > value ? prev : curr;
-  });
-  const intDur = fittedData.x[fittedData.y.indexOf(threshold)];
-  const signal = sigmoid(intDur, ...sigmoidParams);
-  const scaledSignal = Math.round(
-    ((signal - sigmoidYMin) / sigmoidYRange) * 100
-  );
-
-  plotLayout.xaxis2.tickvals = [intDur];
-  plotLayout.xaxis2.ticktext = [intDur + "&mu;s"];
-  plotLayout.yaxis2.tickvals = [signal];
-  plotLayout.yaxis2.ticktext = [scaledSignal + "%"];
-  plotLayout.shapes[0].x0 = intDur + "";
-  plotLayout.shapes[0].x1 = intDur + "";
-  plotLayout.shapes[1].y0 = signal + "";
-  plotLayout.shapes[1].y1 = signal + "";
-
-  return intDur;
-};
-
-const initPlot = async () => {
+const postRequest = async (request: string, args?: any[]) => {
   const dataToSend: any = {
-    sigmoid: {
-      xdata: scatterData.x,
-      ydata: scatterData.y
-    }
+    request
   };
+  if (args) {
+    dataToSend["arguments"] = args;
+  }
   try {
     const response = await requestAPI<any>("tutor/IntDur", {
       body: JSON.stringify(dataToSend),
       method: "POST"
     });
-    sigmoidParams = response;
-    for (let i = 0; i < points; i++) {
-      const x = rawXMin + i * step;
-      const y = sigmoid(x, ...sigmoidParams);
-      sigmoidData.x.push(x);
-      sigmoidData.y.push(y);
-    }
-    sigmoidYMin = Math.min.apply(null, sigmoidData.y);
-    sigmoidYMax = Math.max.apply(null, sigmoidData.y);
-    sigmoidYRange = sigmoidYMax - sigmoidYMin;
-    for (let i = 0; i < points; i++) {
-      sigmoidData.yScaled.push(
-        ((sigmoidData.y[i] - sigmoidYMin) / sigmoidYRange) * 100
-      );
-    }
-    fittedData.x.forEach((item) => {
-      fittedData.y.push(
-        Math.round(
-          ((sigmoid(item, ...sigmoidParams) - sigmoidYMin) / sigmoidYRange) *
-            100
-        )
-      );
-    });
-    minThreshold = fittedData.y[0];
+    return response;
   } catch (error) {
-    Promise.reject(error);
+    return Promise.reject(error);
   }
 };
 
 export const Landing = (props: any): JSX.Element => {
-  const [data, setData] = useState<any>([]);
-  const [layout, setLayout] = useState<any>({});
-  const [config, setConfig] = useState<any>({});
-  const [frames, setFrames] = useState<any>([]);
-  const [intDur, setIntDur] = useState<number | null>();
-  const [sliderMarks, setSliderMarks] = useState<any>([]);
-  const [sliderValue, setSliderValue] = useState<number>(0);
-  const [activeStep, setActiveStep] = useState<number>(0);
+  const [intDur, setIntDur] = useState<number | undefined>();
+  const [activeStep, setActiveStep] = useState<number>(1);
+  const [stepsCompleted, setStepsCompleted] = useState<number[]>([]);
+  const [progress1, setProgress1] = useState<number | undefined>(undefined);
+  const [progress2, setProgress2] = useState<number | undefined>(undefined);
+  const [testPixel, setTestPixel] = useState<number>(0);
+  const [testPixelInProgress, setTestPixelInProgress] = useState<boolean>(true);
+  const [testPixelPauseResume, setTestPixelPauseResume] = useState<string>("");
+  const [modelParams, setModelParams] = useState<ModelParams | undefined>();
+
+  const contextData: ContextData = useContext(Context);
 
   const theme = useTheme();
 
-  const storeState = (figure: any) => {
-    setData(figure.data);
-    setLayout(figure.layout);
-    setConfig(figure.config);
-    setFrames(figure.frames);
+  const setStepComplete = (step: number) => {
+    setStepsCompleted((prev) => {
+      const completed = [...prev];
+      if (!completed.includes(step)) {
+        completed.push(step);
+      }
+      return completed;
+    });
   };
 
-  const handleIntDurInputChange = (value: string) => {
-    if (value !== "" && isNaN(Number(value))) {
+  const resetStepComplete = (step: number) => {
+    setStepsCompleted((prev) => {
+      const completed = [...prev];
+      const index = completed.indexOf(step);
+      if (index > -1) {
+        completed.splice(index, 1);
+      }
+      return completed;
+    });
+  };
+
+  const prepareStep = (step: number) => {
+    switch (step) {
+      case 1:
+        setProgress1(undefined);
+        break;
+      case 2:
+        setTestPixelInProgress(true);
+        setProgress2(undefined);
+        break;
+      case 3:
+        break;
+      default:
+        break;
+    }
+  };
+
+  const eventHandler = async (event: any) => {
+    const data = JSON.parse(event.data);
+
+    if (data.state === "running") {
+      switch (activeStep) {
+        case 1:
+          if (data.progress === 100) {
+            setProgress1(99.9);
+            await sleep(500);
+          }
+          setProgress1(data.progress);
+          break;
+        case 2:
+          if (data.progress === 100) {
+            setProgress2(99.9);
+            await sleep(500);
+          }
+          if (data.progress === 100 && testPixel + 1 !== testPixels.length) {
+            prepareStep(2);
+          } else {
+            setProgress2(data.progress);
+          }
+          break;
+        default:
+          break;
+      }
+    } else if (data.state === "stop") {
+      eventSource!.removeEventListener(EVENT_NAME, eventHandler, false);
+      eventSource!.close();
+      eventSource = undefined;
+      switch (activeStep) {
+        case 1:
+          setStepComplete(1);
+          break;
+        case 2:
+          const nextPixel =
+            testPixel + 1 >= testPixels.length ? 0 : testPixel + 1;
+          setTestPixel(nextPixel);
+          if (nextPixel === 0) {
+            try {
+              const results = await postRequest("get_results");
+              console.log(results);
+              setModelParams(results as ModelParams);
+              setTestPixelInProgress(false);
+              setStepComplete(2);
+            } catch (error) {
+              console.error(error);
+              props.showAlert(ALERT_MESSAGE_TUNING_RESULTS);
+              await sleep(500);
+              prepareStep(2);
+            }
+          }
+          setTestPixelPauseResume("resume");
+          break;
+        default:
+          break;
+      }
+    } else if (data.state === "terminate") {
+      eventSource!.removeEventListener(EVENT_NAME, eventHandler, false);
+      eventSource!.close();
+      eventSource = undefined;
+      switch (activeStep) {
+        case 1:
+          prepareStep(1);
+          break;
+        case 2:
+          prepareStep(2);
+          setTestPixelPauseResume("resume");
+          break;
+        default:
+          break;
+      }
+    }
+  };
+
+  const removeEvent = () => {
+    if (eventSource && eventSource.readyState !== SSE_CLOSED) {
+      eventSource.removeEventListener(EVENT_NAME, eventHandler, false);
+      eventSource.close();
+      eventSource = undefined;
+    }
+  };
+
+  const errorHandler = (error: any) => {
+    removeEvent();
+    console.error(`Error - GET /webds/tutor/event\n${error}`);
+  };
+
+  const addEvent = () => {
+    if (eventSource) {
       return;
     }
-    if (value === "") {
-      setIntDur(null);
-      return;
-    }
-    const num = parseInt(value, 10);
-    if (num < 100) {
-      setIntDur(num);
-    }
+    eventSource = new window.EventSource(
+      "/webds/tutor/event"
+    );
+    eventSource.addEventListener(EVENT_NAME, eventHandler, false);
+    eventSource.addEventListener("error", errorHandler, false);
   };
 
   const handleNextButtonClick = () => {
-    setActiveStep((prevActiveStep) => prevActiveStep + 1);
+    setActiveStep((prevActiveStep) => {
+      prepareStep(prevActiveStep + 1);
+      return prevActiveStep + 1;
+    });
   };
 
   const handleBackButtonClick = () => {
-    setActiveStep((prevActiveStep) => prevActiveStep - 1);
+    setActiveStep((prevActiveStep) => {
+      prepareStep(prevActiveStep - 1);
+      return prevActiveStep - 1;
+    });
   };
 
-  const handleSliderOnChange = (event: any) => {
-    let threshold: number | undefined = undefined;
-    if (fittedData.y.includes(event.target.value)) {
-      threshold = event.target.value;
-    } else {
-      for (let i = 1; i <= 2; i++) {
-        threshold = fittedData.y
-          .slice()
-          .reverse()
-          .find((item) => Math.abs(item - event.target.value) <= i);
-        if (threshold) {
-          break;
+  const handleCollectOnClick = async (step: number) => {
+    switch (step) {
+      case 1:
+        setProgress1(0);
+        resetStepComplete(1);
+        addEvent();
+        setModelParams(undefined);
+        try {
+          await postRequest("collect_baseline_data");
+        } catch (error) {
+          console.error(error);
+          props.showAlert(ALERT_MESSAGE_TUNING_BASELINE_DATA);
         }
-      }
+        break;
+      case 2:
+        setProgress2(0);
+        resetStepComplete(2);
+        addEvent();
+        setModelParams(undefined);
+        setTestPixelPauseResume("pause");
+        await sleep(1000);
+        try {
+          await postRequest("collect_test_pixel_data", [testPixel]);
+        } catch (error) {
+          console.error(error);
+          props.showAlert(ALERT_MESSAGE_TUNING_TEST_PIXEL_DATA);
+        }
+        break;
+      default:
+        break;
     }
-    if (threshold) {
-      const intDur = updatePlot(threshold);
-      setData([plotData[0], plotData[1]]);
-      setLayout(plotLayout);
-      setIntDur(intDur);
-      setSliderValue(threshold);
-      return;
-    } else {
-      setSliderValue(event.target.value);
+  };
+
+  const handleDoneOnClick = (step: number) => {
+    handleNextButtonClick();
+  };
+
+  const handleResetOnClick = (step: number) => {
+    prepareStep(step);
+  };
+
+  const handleCancelOnClick = async (step: number) => {
+    try {
+      await postRequest("cancel_data_collection");
+    } catch (error) {
+      console.error(error);
+      props.showAlert(ALERT_MESSAGE_TUNING_CANCEL);
     }
   };
 
   const rightPanel: (JSX.Element | null)[] = [
-    <div
-      style={{
-        width: "100%",
-        height: "100%",
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center"
-      }}
-    >
-      <div style={{ marginTop: "16px", position: "relative" }}>
-        <Button sx={{ width: "150px" }}>Collect</Button>
-        <LinearProgress sx={{ width: "150px", marginTop: "16px" }} />
-      </div>
-    </div>,
-    <Step2 />,
-    <Stack spacing={3} direction="column" alignItems="center">
-      <div style={{ position: "relative" }}>
-        <Plot
-          data={data}
-          layout={layout}
-          frames={frames}
-          config={config}
-          onInitialized={(figure) => storeState(figure)}
-          onUpdate={(figure) => storeState(figure)}
-        />
+    <Step1 />,
+    <Step2
+      disabled={!stepsCompleted.includes(1)}
+      testPixel={testPixel}
+      testPixels={testPixels}
+      inProgress={testPixelInProgress}
+      pauseResume={testPixelPauseResume}
+    />,
+    <Step3 modelParams={modelParams} setIntDur={setIntDur} />
+  ];
+
+  const steps = [
+    {
+      label: STEPPER_STEPS["1"].label,
+      content: (
         <div
           style={{
-            position: "absolute",
-            top: 0,
-            bottom: 0,
-            left: 0,
-            right: 0,
-            background: "rgba(0, 0, 0, 0)"
+            width: "100%",
+            height: "100%",
+            position: "relative",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center"
           }}
-        />
-      </div>
-      <div style={{ width: contentAttrs.PANEL_WIDTH + "px" }}>
-        <Stack spacing={1} direction="row">
-          <Typography variant="body2" sx={{ paddingTop: "5px" }}>
-            Threshold: {minThreshold}&nbsp;
-          </Typography>
-          <Slider
-            size="small"
-            min={minThreshold}
-            max={100}
-            marks={sliderMarks}
-            value={sliderValue}
-            onChange={handleSliderOnChange}
-            sx={{
-              "& .MuiSlider-mark": {
-                height: 8,
-                backgroundColor: "divider",
-                "&.MuiSlider-markActive": {
-                  opacity: 1,
-                  backgroundColor: "currentColor"
-                }
-              }
+        >
+          <Typography variant="body2">{STEPPER_STEPS["1"].content}</Typography>
+          <ProgressButton
+            progress={progress1}
+            onClick={() => {
+              handleCollectOnClick(1);
             }}
-          />
-          <Typography variant="body2" sx={{ paddingTop: "5px" }}>
-            &nbsp;100
-          </Typography>
-        </Stack>
-      </div>
-      <div style={{ alignSelf: "stretch" }}>
-        <Typography variant="body2" sx={{ display: "inline-block" }}>
-          Integration Duration:&nbsp;
-        </Typography>
-        <TextField
-          variant="standard"
-          value={intDur ? intDur : ""}
-          inputProps={{ style: { textAlign: "center" } }}
-          onChange={(event) => handleIntDurInputChange(event.target.value)}
-          sx={{
-            width: "18px",
-            display: "inline-block",
-            "& .MuiInput-root": {
-              fontSize: "0.875rem"
-            },
-            "& .MuiInput-input": {
-              padding: 0
-            }
+            onDoneClick={() => {
+              handleDoneOnClick(1);
+            }}
+            onResetClick={() => {
+              handleResetOnClick(1);
+            }}
+            onCancelClick={() => {
+              handleCancelOnClick(1);
+            }}
+            sx={{ margin: "16px 0px" }}
+          >
+            Collect
+          </ProgressButton>
+        </div>
+      )
+    },
+    {
+      label: STEPPER_STEPS["2"].label,
+      content: (
+        <div
+          style={{
+            width: "100%",
+            height: "100%",
+            position: "relative",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center"
           }}
-        />
-        <Typography variant="body2" sx={{ display: "inline-block" }}>
-          &nbsp;&mu;s
-        </Typography>
-      </div>
-    </Stack>
+        >
+          <Typography
+            variant="body2"
+            sx={{
+              color: !stepsCompleted.includes(1)
+                ? theme.palette.text.disabled
+                : theme.palette.text.primary
+            }}
+          >
+            {STEPPER_STEPS["2"].content}
+          </Typography>
+          <ProgressButton
+            disabled={!stepsCompleted.includes(1)}
+            progress={progress2}
+            onClick={() => {
+              handleCollectOnClick(2);
+            }}
+            onDoneClick={() => {
+              handleDoneOnClick(2);
+            }}
+            onResetClick={() => {
+              handleResetOnClick(2);
+            }}
+            onCancelClick={() => {
+              handleCancelOnClick(2);
+            }}
+            sx={{ margin: "16px 0px" }}
+          >
+            Collect
+          </ProgressButton>
+          {!stepsCompleted.includes(1) && (
+            <Typography variant="body2">{STEPPER_STEPS["2"].alert}</Typography>
+          )}
+        </div>
+      )
+    },
+    {
+      label: STEPPER_STEPS["3"].label,
+      content: (
+        <div
+          style={{
+            width: "100%",
+            height: "100%",
+            position: "relative",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center"
+          }}
+        >
+          <Typography
+            variant="body2"
+            sx={{
+              color: ![1, 2].every(
+                (item) => stepsCompleted.indexOf(item) !== -1
+              )
+                ? theme.palette.text.disabled
+                : theme.palette.text.primary
+            }}
+          >
+            {STEPPER_STEPS["3"].content}
+          </Typography>
+          <div
+            style={{
+              margin: "16px 0px",
+              display: "flex",
+              flexDirection: "row",
+              gap: "16px"
+            }}
+          >
+            <Button
+              disabled={
+                ![1, 2].every((item) => stepsCompleted.indexOf(item) !== -1) ||
+                intDur === undefined
+              }
+              sx={{ width: "125px" }}
+            >
+              Write to RAM
+            </Button>
+            <Button
+              disabled={
+                ![1, 2].every((item) => stepsCompleted.indexOf(item) !== -1) ||
+                intDur === undefined
+              }
+              sx={{ width: "125px" }}
+            >
+              Write to Flash
+            </Button>
+          </div>
+          {![1, 2].every((item) => stepsCompleted.indexOf(item) !== -1) && (
+            <Typography variant="body2">{STEPPER_STEPS["3"].alert}</Typography>
+          )}
+        </div>
+      )
+    }
   ];
 
   useEffect(() => {
-    plotLayout.plot_bgcolor = theme.palette.mode === "light" ? "#fff" : "#000";
-    plotLayout.font.color = theme.palette.text.primary;
-    setData([plotData[0], plotData[1]]);
-    setLayout(plotLayout);
-  }, [theme]);
+    return () => {
+      removeEvent();
+    };
+  }, []);
 
   useEffect(() => {
     const initialize = async () => {
       try {
-        await initPlot();
-        setSliderMarks(
-          fittedData.y.map((item) => {
-            return { value: item };
-          })
-        );
-        setData(plotData);
-        setLayout(plotLayout);
-        setConfig(plotConfig);
+        await postRequest("initialize", [testPixels]);
       } catch (error) {
         console.error(error);
+        props.showAlert(ALERT_MESSAGE_TUNING_INITIALIZATION);
+        return;
       }
     };
+
+    const numRows = contextData.numRows;
+    const numCols = contextData.numCols;
+    const txOnYAxis = contextData.txOnYAxis;
+    if (txOnYAxis) {
+      testPixels[0].pixel = { rx: 0, tx: 0 };
+      testPixels[1].pixel = { rx: 0, tx: numRows - 1 };
+      testPixels[2].pixel = { rx: numCols - 1, tx: numRows - 1 };
+      testPixels[3].pixel = { rx: numCols - 1, tx: 0 };
+    } else {
+      testPixels[0].pixel = { rx: 0, tx: 0 };
+      testPixels[1].pixel = { rx: 0, tx: numCols - 1 };
+      testPixels[2].pixel = { rx: numRows - 1, tx: numCols - 1 };
+      testPixels[3].pixel = { rx: numRows - 1, tx: 0 };
+    }
+
     initialize();
-    return () => {
-      resetPlot();
-    };
-  }, []);
+  }, [contextData.numRows, contextData.numCols, contextData.txOnYAxis]);
 
   return (
     <Canvas title="Integration Duration">
@@ -523,9 +548,11 @@ export const Landing = (props: any): JSX.Element => {
           >
             <VerticalStepper
               steps={steps}
+              strict={false}
               activeStep={activeStep}
-              onStepClick={(step) => {
-                setActiveStep(step);
+              onStepClick={(clickedStep) => {
+                prepareStep(clickedStep);
+                setActiveStep(clickedStep);
               }}
             />
           </div>
@@ -539,7 +566,7 @@ export const Landing = (props: any): JSX.Element => {
               position: "relative"
             }}
           >
-            {rightPanel[activeStep]}
+            {rightPanel[activeStep - 1]}
           </div>
         </Stack>
       </Content>
@@ -552,7 +579,7 @@ export const Landing = (props: any): JSX.Element => {
         }}
       >
         <BackButton
-          disabled={activeStep === 0}
+          disabled={activeStep === 1}
           onClick={() => handleBackButtonClick()}
           sx={{
             position: "absolute",
@@ -562,7 +589,7 @@ export const Landing = (props: any): JSX.Element => {
           }}
         />
         <NextButton
-          disabled={activeStep === steps.length - 1}
+          disabled={activeStep === steps.length}
           onClick={() => handleNextButtonClick()}
           sx={{
             position: "absolute",

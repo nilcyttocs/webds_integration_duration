@@ -1,13 +1,19 @@
 import React, { useState } from "react";
 
-import Button from "@mui/material/Button";
-import LinearProgress from "@mui/material/LinearProgress";
+import Typography from "@mui/material/Typography";
+
+import DoneIcon from "@mui/icons-material/Done";
+
 import CircularProgress from "@mui/material/CircularProgress";
+
+import { useTheme } from "@mui/material/styles";
 
 import DeltaImage from "./DeltaImage";
 
 export const Step2 = (props: any): JSX.Element => {
   const [plotReady, setPlotReady] = useState<boolean>(false);
+
+  const theme = useTheme();
 
   return (
     <>
@@ -26,6 +32,7 @@ export const Step2 = (props: any): JSX.Element => {
             zMin={-100}
             zMax={300}
             showScale={false}
+            pauseResume={props.disabled ? "pause" : props.pauseResume}
             setPlotReady={setPlotReady}
           />
           <div
@@ -39,26 +46,69 @@ export const Step2 = (props: any): JSX.Element => {
             }}
           />
           {plotReady && (
-            <div
-              style={{
-                width: "30px",
-                height: "30px",
-                position: "absolute",
-                bottom: 0,
-                left: 0,
-                transform: "translate(-35%, 35%)",
-                border: "3px solid red",
-                borderRadius: "50%",
-                background: "rgba(0, 0, 0, 0)"
-              }}
-            />
+            <>
+              {props.testPixels.map((item: any, index: number) => {
+                return (
+                  <div
+                    key={index}
+                    style={{
+                      width: "30px",
+                      height: "30px",
+                      position: "absolute",
+                      border:
+                        !props.disabled &&
+                        props.inProgress &&
+                        index === props.testPixel
+                          ? "3px solid red"
+                          : "1.5px solid grey",
+                      borderRadius: "50%",
+                      background: "rgba(0, 0, 0, 0)",
+                      ...item.circle
+                    }}
+                  />
+                );
+              })}
+            </>
           )}
         </div>
         {plotReady && (
-          <>
-            <Button sx={{ width: "150px", marginTop: "48px" }}>Collect</Button>
-            <LinearProgress sx={{ width: "150px", marginTop: "16px" }} />
-          </>
+          <div
+            style={{
+              marginTop: "48px"
+            }}
+          >
+            {props.testPixels.map((item: any, index: number) => {
+              return (
+                <div
+                  key={index}
+                  style={{ marginTop: "12px", position: "relative" }}
+                >
+                  <Typography
+                    variant={"body2"}
+                    sx={{
+                      color:
+                        !props.disabled &&
+                        props.inProgress &&
+                        index === props.testPixel
+                          ? "red"
+                          : theme.palette.text.disabled
+                    }}
+                  >
+                    Test Pixel {index + 1}: Tx = {item.pixel.tx}, Rx ={" "}
+                    {item.pixel.rx}
+                  </Typography>
+                  {!props.disabled &&
+                    (!props.inProgress || index < props.testPixel) && (
+                      <div
+                        style={{ position: "absolute", top: -4, right: -32 }}
+                      >
+                        <DoneIcon sx={{ color: theme.palette.primary.main }} />
+                      </div>
+                    )}
+                </div>
+              );
+            })}
+          </div>
         )}
       </div>
       {!plotReady && (
