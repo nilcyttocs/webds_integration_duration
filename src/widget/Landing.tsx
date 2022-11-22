@@ -334,7 +334,8 @@ export const Landing = (props: any): JSX.Element => {
   };
 
   const handleWriteConfigButtonClick = async (commit: boolean) => {
-    const entries = CONFIG_ENTRIES.map((item, index) => {
+    const entries: any = {};
+    CONFIG_ENTRIES.forEach((item, index) => {
       const value = props.configValues[index];
       switch (index) {
         case 0:
@@ -352,7 +353,7 @@ export const Landing = (props: any): JSX.Element => {
         default:
           break;
       }
-      return { name: item, value: value };
+      entries[item] = value;
     });
     try {
       await props.touchcomm.writeStaticConfig(entries, commit);
