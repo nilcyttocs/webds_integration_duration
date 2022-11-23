@@ -323,7 +323,7 @@ export const Step3 = (props: any): JSX.Element => {
               title={
                 intDur !== undefined
                   ? intDur < props.modelParams.minimumIntDur
-                    ? "recommended minimum: " + props.modelParams.minimumIntDur
+                    ? "suggested minimum: " + props.modelParams.minimumIntDur
                     : ""
                   : ""
               }
@@ -374,25 +374,13 @@ export const Step3 = (props: any): JSX.Element => {
               alignItems: "center"
             }}
           >
-            <Button
-              variant="outlined"
-              disabled={props.modelParams === undefined}
-              onClick={() => {
-                handleOptimumButtonClick(props.modelParams.optimalIntDur[0]);
-              }}
-              sx={{ width: " 100px", padding: "2px 5px" }}
-            >
-              <Typography variant="body2">
-                Optimum: {props.modelParams?.optimalIntDur[0]}
-              </Typography>
-            </Button>
             <Typography
               variant="body2"
               sx={{
                 fontSize: "0.65rem"
               }}
             >
-              &nbsp;(current setting on device: {props.current})
+              Suggested Setting: {props.modelParams?.optimalIntDur[0]}
             </Typography>
           </div>
           <div style={{ width: "100%", marginTop: "16px" }}>
