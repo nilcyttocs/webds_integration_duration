@@ -2,7 +2,6 @@ import React, { useEffect, useState } from "react";
 
 import Stack from "@mui/material/Stack";
 import Slider from "@mui/material/Slider";
-import Button from "@mui/material/Button";
 import Tooltip from "@mui/material/Tooltip";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
@@ -188,11 +187,6 @@ export const Step3 = (props: any): JSX.Element => {
   };
 
   const initPlot = () => {
-    /*
-    const points = Math.min(
-      Math.max(Math.round(intDur * 2), MIN_X_RANGE),
-      MAX_X_RANGE
-    );*/
     const points = MAX_X_RANGE;
     resetPlot();
     for (let i = 0; i < points; i++) {
@@ -240,12 +234,6 @@ export const Step3 = (props: any): JSX.Element => {
       setIntDur(num);
       setSliderValue(num);
     }
-  };
-
-  const handleOptimumButtonClick = (intDur: number) => {
-    updatePlot(intDur);
-    setIntDur(intDur);
-    setSliderValue(intDur);
   };
 
   const handleSliderChange = (event: any) => {
