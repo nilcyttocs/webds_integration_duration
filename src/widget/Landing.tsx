@@ -133,6 +133,10 @@ export const Landing = (props: any): JSX.Element => {
 
   const theme = useTheme();
 
+  const collecting =
+    (progress1 !== undefined && progress1 < 100) ||
+    (progress2 !== undefined && progress2 < 100);
+
   const setStepComplete = (step: number) => {
     setStepsCompleted((prev) => {
       const completed = [...prev];
@@ -459,7 +463,9 @@ export const Landing = (props: any): JSX.Element => {
             Collect
           </ProgressButton>
           {!stepsCompleted.includes(1) && (
-            <Typography variant="body2">{STEPPER_STEPS["2"].alert}</Typography>
+            <Typography variant="body2" color="red">
+              {STEPPER_STEPS["2"].alert}
+            </Typography>
           )}
         </div>
       )
@@ -480,9 +486,7 @@ export const Landing = (props: any): JSX.Element => {
           <Typography
             variant="body2"
             sx={{
-              color: ![1, 2].every(
-                (item) => stepsCompleted.indexOf(item) !== -1
-              )
+              color: [1, 2].some((item) => stepsCompleted.indexOf(item) === -1)
                 ? theme.palette.text.disabled
                 : theme.palette.text.primary
             }}
@@ -501,7 +505,7 @@ export const Landing = (props: any): JSX.Element => {
               disabled={
                 intDur === undefined ||
                 (intDur === current && writtenToRAM) ||
-                ![1, 2].every((item) => stepsCompleted.indexOf(item) !== -1)
+                [1, 2].some((item) => stepsCompleted.indexOf(item) === -1)
               }
               onClick={() => handleWriteConfigButtonClick(false)}
               sx={{ width: "125px" }}
@@ -512,7 +516,7 @@ export const Landing = (props: any): JSX.Element => {
               disabled={
                 intDur === undefined ||
                 (intDur === current && writtenToFlash) ||
-                ![1, 2].every((item) => stepsCompleted.indexOf(item) !== -1)
+                [1, 2].some((item) => stepsCompleted.indexOf(item) === -1)
               }
               onClick={() => handleWriteConfigButtonClick(true)}
               sx={{ width: "125px" }}
@@ -520,8 +524,10 @@ export const Landing = (props: any): JSX.Element => {
               Write to Flash
             </Button>
           </div>
-          {![1, 2].every((item) => stepsCompleted.indexOf(item) !== -1) && (
-            <Typography variant="body2">{STEPPER_STEPS["3"].alert}</Typography>
+          {[1, 2].some((item) => stepsCompleted.indexOf(item) === -1) && (
+            <Typography variant="body2" color="red">
+              {STEPPER_STEPS["3"].alert}
+            </Typography>
           )}
         </div>
       )
@@ -590,7 +596,7 @@ export const Landing = (props: any): JSX.Element => {
           >
             <VerticalStepper
               steps={steps}
-              strict={false}
+              strict={collecting}
               activeStep={activeStep}
               onStepClick={(clickedStep) => {
                 prepareStep(clickedStep);
@@ -621,7 +627,7 @@ export const Landing = (props: any): JSX.Element => {
         }}
       >
         <BackButton
-          disabled={activeStep === 1}
+          disabled={activeStep === 1 || collecting}
           onClick={() => handleBackButtonClick()}
           sx={{
             position: "absolute",
@@ -631,7 +637,7 @@ export const Landing = (props: any): JSX.Element => {
           }}
         />
         <NextButton
-          disabled={activeStep === steps.length}
+          disabled={activeStep === steps.length || collecting}
           onClick={() => handleNextButtonClick()}
           sx={{
             position: "absolute",
