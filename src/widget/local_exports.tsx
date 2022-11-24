@@ -1,3 +1,3 @@
-export { ContextData, Context } from "../local_exports";
+export { ContextData, Context } from "./IntegrationDurationComponent";
 
 export { requestAPI } from "../handler";
