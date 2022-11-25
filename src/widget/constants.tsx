@@ -1,3 +1,9 @@
+export const ALERT_MESSAGE_PUBLIC_CONFIG_JSON =
+  "Failed to retrieve config JSON file. Please check in file browser in left sidebar and ensure availability of config JSON file in /Packrat/ directory (e.g. /Packrat/1234567/config.json for PR1234567).";
+
+export const ALERT_MESSAGE_PRIVATE_CONFIG_JSON =
+  "Failed to retrieve config JSON file. Please check in file browser in left sidebar and ensure availability of config JSON file in /Packrat/ directory (e.g. /Packrat/1234567/config_private.json for PR1234567).";
+
 export const ALERT_MESSAGE_APP_INFO =
   "Failed to read application info from device.";
 

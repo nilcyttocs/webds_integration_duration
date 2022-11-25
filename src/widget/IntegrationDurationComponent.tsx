@@ -9,6 +9,8 @@ import { ThemeProvider } from "@mui/material/styles";
 import Landing from "./Landing";
 
 import {
+  ALERT_MESSAGE_PUBLIC_CONFIG_JSON,
+  ALERT_MESSAGE_PRIVATE_CONFIG_JSON,
   ALERT_MESSAGE_APP_INFO,
   ALERT_MESSAGE_STATIC_CONFIG,
   ALERT_MESSAGE_STATIC_CONFIG_ENTRIES,
@@ -41,6 +43,22 @@ export const IntegrationDurationComponent = (props: any): JSX.Element => {
 
   useEffect(() => {
     const initialize = async () => {
+      const external = props.service.pinormos.isExternal();
+      try {
+        if (external) {
+          await props.service.packrat.cache.addPublicConfig();
+        } else {
+          await props.service.packrat.cache.addPrivateConfig();
+        }
+      } catch (error) {
+        console.error(error);
+        if (external) {
+          showAlert(ALERT_MESSAGE_PUBLIC_CONFIG_JSON);
+        } else {
+          showAlert(ALERT_MESSAGE_PRIVATE_CONFIG_JSON);
+        }
+        return;
+      }
       const dataToSend: any = {
         command: "getAppInfo"
       };
