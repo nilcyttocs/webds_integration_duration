@@ -1,1 +1,1 @@
-../../../../webds_component_lib/plotting/adc/DeltaImage.tsx
+../../../../webds_component_lib/plotting/adc_live/DeltaImage.tsx
