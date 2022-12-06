@@ -40,8 +40,6 @@ const plugin: JupyterFrontEndPlugin<void> = {
       "JupyterLab extension @webds/integration_duration is activated!"
     );
 
-    await service.initialized;
-
     let widget: WebDSWidget;
     const { commands, shell } = app;
     const command = Attributes.command;
