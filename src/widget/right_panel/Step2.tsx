@@ -8,7 +8,9 @@ import CircularProgress from "@mui/material/CircularProgress";
 
 import { useTheme } from "@mui/material/styles";
 
-import DeltaImage from "./DeltaImage";
+import ADCLive from "../adc_plots/ADCLive";
+
+const REPORT_DELTA = 18;
 
 export const Step2 = (props: any): JSX.Element => {
   const [plotReady, setPlotReady] = useState<boolean>(false);
@@ -27,12 +29,15 @@ export const Step2 = (props: any): JSX.Element => {
         }}
       >
         <div style={{ marginTop: "16px", position: "relative" }}>
-          <DeltaImage
-            plotWidth={300}
+          <ADCLive
+            length={300}
             zMin={-100}
             zMax={300}
+            reportType={REPORT_DELTA}
+            run={true}
+            imageOnly={true}
             showScale={false}
-            pauseResume={props.disabled ? "pause" : props.pauseResume}
+            halt={props.disabled ? true : props.pauseResume === "pause"}
             setPlotReady={setPlotReady}
           />
           <div

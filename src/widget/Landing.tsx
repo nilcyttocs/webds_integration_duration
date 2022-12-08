@@ -209,6 +209,7 @@ export const Landing = (props: any): JSX.Element => {
           setStepComplete(1);
           break;
         case 2:
+          await sleep(500);
           const nextPixel =
             testPixel + 1 >= testPixels.length ? 0 : testPixel + 1;
           setTestPixel(nextPixel);
