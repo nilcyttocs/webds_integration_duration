@@ -33,8 +33,8 @@ export const Step2 = (props: any): JSX.Element => {
             length={300}
             zMin={-100}
             zMax={300}
-            reportType={REPORT_DELTA}
             run={true}
+            reportType={REPORT_DELTA}
             imageOnly={true}
             showScale={false}
             halt={props.disabled ? true : props.pauseResume === "pause"}
