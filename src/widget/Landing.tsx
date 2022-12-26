@@ -32,7 +32,7 @@ import {
   CONFIG_PARAMS
 } from "./constants";
 
-import { ContextData, Context } from "./local_exports";
+import { ContextData, Context, webdsService } from "./local_exports";
 
 import {
   BackButton,
@@ -361,7 +361,7 @@ export const Landing = (props: any): JSX.Element => {
       entries[item] = value;
     });
     try {
-      await props.touchcomm.writeStaticConfig(entries, commit);
+      await webdsService.touchcomm.writeStaticConfig(entries, commit);
     } catch (error) {
       console.error(error);
       props.showAlert(

@@ -6,6 +6,8 @@ import { WebDSService } from "@webds/service";
 
 import IntegrationDurationComponent from "./IntegrationDurationComponent";
 
+export let webdsService: WebDSService;
+
 export class IntegrationDurationWidget extends ReactWidget {
   id: string;
   service: WebDSService | null = null;
@@ -17,9 +19,10 @@ export class IntegrationDurationWidget extends ReactWidget {
   }
 
   render(): JSX.Element {
+    webdsService = this.service;
     return (
       <div id={this.id + "_component"}>
-        <IntegrationDurationComponent service={this.service} />
+        <IntegrationDurationComponent />
       </div>
     );
   }

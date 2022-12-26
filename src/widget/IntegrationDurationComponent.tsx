@@ -8,6 +8,8 @@ import { ThemeProvider } from "@mui/material/styles";
 
 import Landing from "./Landing";
 
+import { webdsService } from "./local_exports";
+
 import {
   ALERT_MESSAGE_PUBLIC_CONFIG_JSON,
   ALERT_MESSAGE_PRIVATE_CONFIG_JSON,
@@ -36,6 +38,8 @@ export const IntegrationDurationComponent = (props: any): JSX.Element => {
   const [txOnYAxis, setTxOnYAxis] = useState<boolean>(true);
   const [configValues, setConfigValues] = useState<any[]>([]);
 
+  const webdsTheme = webdsService.ui.getWebDSTheme();
+
   const showAlert = (message: string) => {
     alertMessage = message;
     setAlert(true);
@@ -43,12 +47,12 @@ export const IntegrationDurationComponent = (props: any): JSX.Element => {
 
   useEffect(() => {
     const initialize = async () => {
-      const external = props.service.pinormos.isExternal();
+      const external = webdsService.pinormos.isExternal();
       try {
         if (external) {
-          await props.service.packrat.cache.addPublicConfig();
+          await webdsService.packrat.cache.addPublicConfig();
         } else {
-          await props.service.packrat.cache.addPrivateConfig();
+          await webdsService.packrat.cache.addPrivateConfig();
         }
       } catch (error) {
         console.error(error);
@@ -76,7 +80,7 @@ export const IntegrationDurationComponent = (props: any): JSX.Element => {
         return;
       }
       try {
-        const config = await props.service.touchcomm.readStaticConfig();
+        const config = await webdsService.touchcomm.readStaticConfig();
         if (!CONFIG_ENTRIES.every((item) => item in config)) {
           showAlert(ALERT_MESSAGE_STATIC_CONFIG_ENTRIES);
           return;
@@ -94,8 +98,6 @@ export const IntegrationDurationComponent = (props: any): JSX.Element => {
     };
     initialize();
   }, []);
-
-  const webdsTheme = props.service.ui.getWebDSTheme();
 
   return (
     <>
@@ -118,11 +120,7 @@ export const IntegrationDurationComponent = (props: any): JSX.Element => {
                 txOnYAxis: txOnYAxis
               }}
             >
-              <Landing
-                showAlert={showAlert}
-                configValues={configValues}
-                touchcomm={props.service.touchcomm}
-              />
+              <Landing showAlert={showAlert} configValues={configValues} />
             </Context.Provider>
           )}
         </div>
