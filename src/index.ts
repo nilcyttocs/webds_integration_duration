@@ -23,6 +23,8 @@ namespace Attributes {
   export const rank = 40;
 }
 
+export let webdsService: WebDSService;
+
 /**
  * Initialization data for the @webds/integration_duration extension.
  */
@@ -40,6 +42,8 @@ const plugin: JupyterFrontEndPlugin<void> = {
       "JupyterLab extension @webds/integration_duration is activated!"
     );
 
+    webdsService = service;
+
     let widget: WebDSWidget;
     const { commands, shell } = app;
     const command = Attributes.command;
@@ -51,7 +55,7 @@ const plugin: JupyterFrontEndPlugin<void> = {
       },
       execute: () => {
         if (!widget || widget.isDisposed) {
-          const content = new IntegrationDurationWidget(Attributes.id, service);
+          const content = new IntegrationDurationWidget(Attributes.id);
           widget = new WebDSWidget<IntegrationDurationWidget>({ content });
           widget.id = Attributes.id;
           widget.title.label = Attributes.label;

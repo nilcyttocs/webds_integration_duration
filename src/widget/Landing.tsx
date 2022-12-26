@@ -32,7 +32,12 @@ import {
   CONFIG_PARAMS
 } from "./constants";
 
-import { ContextData, Context, webdsService } from "./local_exports";
+import {
+  ContextData,
+  Context,
+  requestAPI,
+  webdsService
+} from "./local_exports";
 
 import {
   BackButton,
@@ -43,8 +48,6 @@ import {
 import Step1 from "./right_panel/Step1";
 import Step2 from "./right_panel/Step2";
 import Step3 from "./right_panel/Step3";
-
-import { requestAPI } from "../handler";
 
 const SSE_CLOSED = 2;
 
@@ -267,9 +270,7 @@ export const Landing = (props: any): JSX.Element => {
     if (eventSource) {
       return;
     }
-    eventSource = new window.EventSource(
-      "/webds/tutor/event"
-    );
+    eventSource = new window.EventSource("/webds/tutor/event");
     eventSource.addEventListener(EVENT_NAME, eventHandler, false);
     eventSource.addEventListener("error", errorHandler, false);
   };

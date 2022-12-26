@@ -1,3 +1,3 @@
-export { webdsService } from "./widget/IntegrationDurationWidget";
+export { webdsService } from "./index";
 
 export { requestAPI } from "./handler";
