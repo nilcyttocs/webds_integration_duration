@@ -1,23 +1,19 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState } from 'react';
 
-import Alert from "@mui/material/Alert";
-
-import CircularProgress from "@mui/material/CircularProgress";
-
-import { ThemeProvider } from "@mui/material/styles";
-
-import Landing from "./Landing";
-
-import { requestAPI, webdsService } from "./local_exports";
+import Alert from '@mui/material/Alert';
+import CircularProgress from '@mui/material/CircularProgress';
+import { ThemeProvider } from '@mui/material/styles';
 
 import {
-  ALERT_MESSAGE_PUBLIC_CONFIG_JSON,
-  ALERT_MESSAGE_PRIVATE_CONFIG_JSON,
   ALERT_MESSAGE_APP_INFO,
+  ALERT_MESSAGE_PRIVATE_CONFIG_JSON,
+  ALERT_MESSAGE_PUBLIC_CONFIG_JSON,
   ALERT_MESSAGE_STATIC_CONFIG,
   ALERT_MESSAGE_STATIC_CONFIG_ENTRIES,
   CONFIG_ENTRIES
-} from "./constants";
+} from './constants';
+import Landing from './Landing';
+import { requestAPI, webdsService } from './local_exports';
 
 export type ContextData = {
   numRows: number;
@@ -27,7 +23,7 @@ export type ContextData = {
 
 export const Context = React.createContext({} as ContextData);
 
-let alertMessage = "";
+let alertMessage = '';
 
 export const IntegrationDurationComponent = (props: any): JSX.Element => {
   const [initialized, setInitialized] = useState<boolean>(false);
@@ -62,12 +58,12 @@ export const IntegrationDurationComponent = (props: any): JSX.Element => {
         return;
       }
       const dataToSend: any = {
-        command: "getAppInfo"
+        command: 'getAppInfo'
       };
       try {
-        const response = await requestAPI<any>("command", {
+        const response = await requestAPI<any>('command', {
           body: JSON.stringify(dataToSend),
-          method: "POST"
+          method: 'POST'
         });
         if (response.numCols && response.numRows) {
           setColsRows([response.numCols, response.numRows]);
@@ -79,11 +75,11 @@ export const IntegrationDurationComponent = (props: any): JSX.Element => {
       }
       try {
         const config = await webdsService.touchcomm.readStaticConfig();
-        if (!CONFIG_ENTRIES.every((item) => item in config)) {
+        if (!CONFIG_ENTRIES.every(item => item in config)) {
           showAlert(ALERT_MESSAGE_STATIC_CONFIG_ENTRIES);
           return;
         }
-        setConfigValues(CONFIG_ENTRIES.map((item) => config[item]));
+        setConfigValues(CONFIG_ENTRIES.map(item => config[item]));
         if (config.txAxis) {
           setTxOnYAxis(!!config.txAxis);
         }
@@ -105,7 +101,7 @@ export const IntegrationDurationComponent = (props: any): JSX.Element => {
             <Alert
               severity="error"
               onClose={() => setAlert(false)}
-              sx={{ whiteSpace: "pre-wrap" }}
+              sx={{ whiteSpace: 'pre-wrap' }}
             >
               {alertMessage}
             </Alert>
@@ -125,10 +121,10 @@ export const IntegrationDurationComponent = (props: any): JSX.Element => {
         {!initialized && (
           <div
             style={{
-              position: "absolute",
-              top: "50%",
-              left: "50%",
-              transform: "translate(-50%, -50%)"
+              position: 'absolute',
+              top: '50%',
+              left: '50%',
+              transform: 'translate(-50%, -50%)'
             }}
           >
             <CircularProgress color="primary" />

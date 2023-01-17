@@ -1,14 +1,11 @@
-import React, { useState } from "react";
+import React, { useState } from 'react';
 
-import Typography from "@mui/material/Typography";
+import DoneIcon from '@mui/icons-material/Done';
+import CircularProgress from '@mui/material/CircularProgress';
+import { useTheme } from '@mui/material/styles';
+import Typography from '@mui/material/Typography';
 
-import DoneIcon from "@mui/icons-material/Done";
-
-import CircularProgress from "@mui/material/CircularProgress";
-
-import { useTheme } from "@mui/material/styles";
-
-import ADCLive from "../adc_plots/ADCLive";
+import ADCLive from '../adc_plots/ADCLive';
 
 const REPORT_DELTA = 18;
 
@@ -21,14 +18,14 @@ export const Step2 = (props: any): JSX.Element => {
     <>
       <div
         style={{
-          width: "100%",
-          height: "100%",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center"
+          width: '100%',
+          height: '100%',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center'
         }}
       >
-        <div style={{ marginTop: "16px", position: "relative" }}>
+        <div style={{ marginTop: '16px', position: 'relative' }}>
           <ADCLive
             length={300}
             zMin={-100}
@@ -37,17 +34,17 @@ export const Step2 = (props: any): JSX.Element => {
             reportType={REPORT_DELTA}
             imageOnly={true}
             showScale={false}
-            halt={props.disabled ? true : props.pauseResume === "pause"}
+            halt={props.disabled ? true : props.pauseResume === 'pause'}
             setPlotReady={setPlotReady}
           />
           <div
             style={{
-              position: "absolute",
+              position: 'absolute',
               top: 0,
               bottom: 0,
               left: 0,
               right: 0,
-              background: "rgba(0, 0, 0, 0)"
+              background: 'rgba(0, 0, 0, 0)'
             }}
           />
           {plotReady && (
@@ -57,17 +54,17 @@ export const Step2 = (props: any): JSX.Element => {
                   <div
                     key={index}
                     style={{
-                      width: "30px",
-                      height: "30px",
-                      position: "absolute",
+                      width: '30px',
+                      height: '30px',
+                      position: 'absolute',
                       border:
                         !props.disabled &&
                         props.inProgress &&
                         index === props.testPixel
-                          ? "3px solid red"
-                          : "1.5px solid grey",
-                      borderRadius: "50%",
-                      background: "rgba(0, 0, 0, 0)",
+                          ? '3px solid red'
+                          : '1.5px solid grey',
+                      borderRadius: '50%',
+                      background: 'rgba(0, 0, 0, 0)',
                       ...item.circle
                     }}
                   />
@@ -79,17 +76,17 @@ export const Step2 = (props: any): JSX.Element => {
         {plotReady && (
           <div
             style={{
-              marginTop: "48px"
+              marginTop: '48px'
             }}
           >
             {props.testPixels.map((item: any, index: number) => {
               return (
                 <div
                   key={index}
-                  style={{ marginTop: "12px", position: "relative" }}
+                  style={{ marginTop: '12px', position: 'relative' }}
                 >
                   <Typography
-                    variant={"body2"}
+                    variant={'body2'}
                     sx={{
                       color:
                         !props.disabled &&
@@ -99,13 +96,13 @@ export const Step2 = (props: any): JSX.Element => {
                           : theme.palette.text.disabled
                     }}
                   >
-                    Test Pixel {index + 1}: Tx = {item.pixel.tx}, Rx ={" "}
+                    Test Pixel {index + 1}: Tx = {item.pixel.tx}, Rx ={' '}
                     {item.pixel.rx}
                   </Typography>
                   {!props.disabled &&
                     (!props.inProgress || index < props.testPixel) && (
                       <div
-                        style={{ position: "absolute", top: -4, right: -32 }}
+                        style={{ position: 'absolute', top: -4, right: -32 }}
                       >
                         <DoneIcon sx={{ color: theme.palette.primary.main }} />
                       </div>
@@ -119,10 +116,10 @@ export const Step2 = (props: any): JSX.Element => {
       {!plotReady && (
         <div
           style={{
-            position: "absolute",
-            top: "50%",
-            left: "50%",
-            transform: "translate(-50%, -50%)"
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)'
           }}
         >
           <CircularProgress color="primary" />

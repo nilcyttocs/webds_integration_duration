@@ -1,8 +1,8 @@
-import React from "react";
+import React from 'react';
 
-import { ReactWidget } from "@jupyterlab/apputils";
+import { ReactWidget } from '@jupyterlab/apputils';
 
-import IntegrationDurationComponent from "./IntegrationDurationComponent";
+import IntegrationDurationComponent from './IntegrationDurationComponent';
 
 export class IntegrationDurationWidget extends ReactWidget {
   id: string;
@@ -14,7 +14,7 @@ export class IntegrationDurationWidget extends ReactWidget {
 
   render(): JSX.Element {
     return (
-      <div id={this.id + "_component"}>
+      <div id={this.id + '_component'}>
         <IntegrationDurationComponent />
       </div>
     );

@@ -1,53 +1,47 @@
-import React, { useContext, useEffect, useState } from "react";
+import React, { useContext, useEffect, useState } from 'react';
 
-import Stack from "@mui/material/Stack";
-import Divider from "@mui/material/Divider";
-import Button from "@mui/material/Button";
-import Typography from "@mui/material/Typography";
-
-import { useTheme } from "@mui/material/styles";
-
-import { Canvas } from "./mui_extensions/Canvas";
-import { Content } from "./mui_extensions/Content";
-import { Controls } from "./mui_extensions/Controls";
-import {
-  CANVAS_ATTRS,
-  ContentAttrs,
-  getContentAttrs
-} from "./mui_extensions/constants";
-
-import { VerticalStepper } from "./mui_extensions/Stepper";
+import Button from '@mui/material/Button';
+import Divider from '@mui/material/Divider';
+import Stack from '@mui/material/Stack';
+import { useTheme } from '@mui/material/styles';
+import Typography from '@mui/material/Typography';
 
 import {
-  ALERT_MESSAGE_TUNING_INITIALIZATION,
   ALERT_MESSAGE_TUNING_BASELINE_DATA,
-  ALERT_MESSAGE_TUNING_TEST_PIXEL_DATA,
-  ALERT_MESSAGE_TUNING_RESULTS,
   ALERT_MESSAGE_TUNING_CANCEL,
+  ALERT_MESSAGE_TUNING_INITIALIZATION,
+  ALERT_MESSAGE_TUNING_RESULTS,
+  ALERT_MESSAGE_TUNING_TEST_PIXEL_DATA,
   ALERT_MESSAGE_WRITE_TO_FLASH,
   ALERT_MESSAGE_WRITE_TO_RAM,
-  EVENT_NAME,
-  STEPPER_STEPS,
   CONFIG_ENTRIES,
-  CONFIG_PARAMS
-} from "./constants";
-
+  CONFIG_PARAMS,
+  EVENT_NAME,
+  STEPPER_STEPS
+} from './constants';
 import {
-  ContextData,
   Context,
+  ContextData,
   requestAPI,
   webdsService
-} from "./local_exports";
-
+} from './local_exports';
 import {
   BackButton,
   NextButton,
   ProgressButton
-} from "./mui_extensions/Button";
-
-import Step1 from "./right_panel/Step1";
-import Step2 from "./right_panel/Step2";
-import Step3 from "./right_panel/Step3";
+} from './mui_extensions/Button';
+import { Canvas } from './mui_extensions/Canvas';
+import {
+  CANVAS_ATTRS,
+  ContentAttrs,
+  getContentAttrs
+} from './mui_extensions/constants';
+import { Content } from './mui_extensions/Content';
+import { Controls } from './mui_extensions/Controls';
+import { VerticalStepper } from './mui_extensions/Stepper';
+import Step1 from './right_panel/Step1';
+import Step2 from './right_panel/Step2';
+import Step3 from './right_panel/Step3';
 
 const SSE_CLOSED = 2;
 
@@ -69,7 +63,7 @@ const testPixels = [
     circle: {
       bottom: 0,
       left: 0,
-      transform: "translate(-35%, 35%)"
+      transform: 'translate(-35%, 35%)'
     }
   },
   {
@@ -77,7 +71,7 @@ const testPixels = [
     circle: {
       top: 0,
       left: 0,
-      transform: "translate(-35%, -35%)"
+      transform: 'translate(-35%, -35%)'
     }
   },
   {
@@ -85,7 +79,7 @@ const testPixels = [
     circle: {
       top: 0,
       right: 0,
-      transform: "translate(35%, -35%)"
+      transform: 'translate(35%, -35%)'
     }
   },
   {
@@ -93,24 +87,24 @@ const testPixels = [
     circle: {
       bottom: 0,
       right: 0,
-      transform: "translate(35%, 35%)"
+      transform: 'translate(35%, 35%)'
     }
   }
 ];
 
-const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+const sleep = (ms: number) => new Promise(r => setTimeout(r, ms));
 
 const postRequest = async (request: string, args?: any[]) => {
   const dataToSend: any = {
     request
   };
   if (args) {
-    dataToSend["arguments"] = args;
+    dataToSend['arguments'] = args;
   }
   try {
-    const response = await requestAPI<any>("tutor/IntDur", {
+    const response = await requestAPI<any>('tutor/IntDur', {
       body: JSON.stringify(dataToSend),
-      method: "POST"
+      method: 'POST'
     });
     return response;
   } catch (error) {
@@ -127,7 +121,7 @@ export const Landing = (props: any): JSX.Element => {
   const [progress2, setProgress2] = useState<number | undefined>(undefined);
   const [testPixel, setTestPixel] = useState<number>(0);
   const [testPixelInProgress, setTestPixelInProgress] = useState<boolean>(true);
-  const [testPixelPauseResume, setTestPixelPauseResume] = useState<string>("");
+  const [testPixelPauseResume, setTestPixelPauseResume] = useState<string>('');
   const [modelParams, setModelParams] = useState<ModelParams | undefined>();
   const [writtenToRAM, setWrittenToRAM] = useState<boolean>(true);
   const [writtenToFlash, setWrittenToFlash] = useState<boolean>(true);
@@ -141,7 +135,7 @@ export const Landing = (props: any): JSX.Element => {
     (progress2 !== undefined && progress2 < 100);
 
   const setStepComplete = (step: number) => {
-    setStepsCompleted((prev) => {
+    setStepsCompleted(prev => {
       const completed = [...prev];
       if (!completed.includes(step)) {
         completed.push(step);
@@ -151,7 +145,7 @@ export const Landing = (props: any): JSX.Element => {
   };
 
   const resetStepComplete = (step: number) => {
-    setStepsCompleted((prev) => {
+    setStepsCompleted(prev => {
       const completed = [...prev];
       const index = completed.indexOf(step);
       if (index > -1) {
@@ -180,7 +174,7 @@ export const Landing = (props: any): JSX.Element => {
   const eventHandler = async (event: any) => {
     const data = JSON.parse(event.data);
 
-    if (data.state === "running") {
+    if (data.state === 'run') {
       switch (activeStep) {
         case 1:
           if (data.progress === 100) {
@@ -203,7 +197,7 @@ export const Landing = (props: any): JSX.Element => {
         default:
           break;
       }
-    } else if (data.state === "stop") {
+    } else if (data.state === 'stop') {
       eventSource!.removeEventListener(EVENT_NAME, eventHandler, false);
       eventSource!.close();
       eventSource = undefined;
@@ -218,7 +212,7 @@ export const Landing = (props: any): JSX.Element => {
           setTestPixel(nextPixel);
           if (nextPixel === 0) {
             try {
-              const results = await postRequest("get_results");
+              const results = await postRequest('get_results');
               console.log(results);
               setModelParams(results as ModelParams);
               setTestPixelInProgress(false);
@@ -230,12 +224,12 @@ export const Landing = (props: any): JSX.Element => {
               prepareStep(2);
             }
           }
-          setTestPixelPauseResume("resume");
+          setTestPixelPauseResume('resume');
           break;
         default:
           break;
       }
-    } else if (data.state === "terminate") {
+    } else if (data.state === 'terminate') {
       eventSource!.removeEventListener(EVENT_NAME, eventHandler, false);
       eventSource!.close();
       eventSource = undefined;
@@ -245,7 +239,7 @@ export const Landing = (props: any): JSX.Element => {
           break;
         case 2:
           prepareStep(2);
-          setTestPixelPauseResume("resume");
+          setTestPixelPauseResume('resume');
           break;
         default:
           break;
@@ -270,20 +264,20 @@ export const Landing = (props: any): JSX.Element => {
     if (eventSource) {
       return;
     }
-    eventSource = new window.EventSource("/webds/tutor/event");
+    eventSource = new window.EventSource('/webds/tutor/event');
     eventSource.addEventListener(EVENT_NAME, eventHandler, false);
-    eventSource.addEventListener("error", errorHandler, false);
+    eventSource.addEventListener('error', errorHandler, false);
   };
 
   const handleNextButtonClick = () => {
-    setActiveStep((prevActiveStep) => {
+    setActiveStep(prevActiveStep => {
       prepareStep(prevActiveStep + 1);
       return prevActiveStep + 1;
     });
   };
 
   const handleBackButtonClick = () => {
-    setActiveStep((prevActiveStep) => {
+    setActiveStep(prevActiveStep => {
       prepareStep(prevActiveStep - 1);
       return prevActiveStep - 1;
     });
@@ -297,7 +291,7 @@ export const Landing = (props: any): JSX.Element => {
         addEvent();
         setModelParams(undefined);
         try {
-          await postRequest("collect_baseline_data");
+          await postRequest('collect_baseline_data');
         } catch (error) {
           console.error(error);
           props.showAlert(ALERT_MESSAGE_TUNING_BASELINE_DATA);
@@ -308,10 +302,10 @@ export const Landing = (props: any): JSX.Element => {
         resetStepComplete(2);
         addEvent();
         setModelParams(undefined);
-        setTestPixelPauseResume("pause");
+        setTestPixelPauseResume('pause');
         await sleep(1000);
         try {
-          await postRequest("collect_test_pixel_data", [testPixel]);
+          await postRequest('collect_test_pixel_data', [testPixel]);
         } catch (error) {
           console.error(error);
           props.showAlert(ALERT_MESSAGE_TUNING_TEST_PIXEL_DATA);
@@ -332,7 +326,7 @@ export const Landing = (props: any): JSX.Element => {
 
   const handleCancelButtonClick = async (step: number) => {
     try {
-      await postRequest("cancel_data_collection");
+      await postRequest('cancel');
     } catch (error) {
       console.error(error);
       props.showAlert(ALERT_MESSAGE_TUNING_CANCEL);
@@ -388,19 +382,19 @@ export const Landing = (props: any): JSX.Element => {
 
   const steps = [
     {
-      label: STEPPER_STEPS["1"].label,
+      label: STEPPER_STEPS['1'].label,
       content: (
         <div
           style={{
-            width: "100%",
-            height: "100%",
-            position: "relative",
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center"
+            width: '100%',
+            height: '100%',
+            position: 'relative',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center'
           }}
         >
-          <Typography variant="body2">{STEPPER_STEPS["1"].content}</Typography>
+          <Typography variant="body2">{STEPPER_STEPS['1'].content}</Typography>
           <ProgressButton
             progress={progress1}
             onClick={() => {
@@ -415,7 +409,7 @@ export const Landing = (props: any): JSX.Element => {
             onCancelClick={() => {
               handleCancelButtonClick(1);
             }}
-            sx={{ margin: "16px 0px" }}
+            sx={{ margin: '16px 0px' }}
           >
             Collect
           </ProgressButton>
@@ -423,16 +417,16 @@ export const Landing = (props: any): JSX.Element => {
       )
     },
     {
-      label: STEPPER_STEPS["2"].label,
+      label: STEPPER_STEPS['2'].label,
       content: (
         <div
           style={{
-            width: "100%",
-            height: "100%",
-            position: "relative",
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center"
+            width: '100%',
+            height: '100%',
+            position: 'relative',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center'
           }}
         >
           <Typography
@@ -443,7 +437,7 @@ export const Landing = (props: any): JSX.Element => {
                 : theme.palette.text.primary
             }}
           >
-            {STEPPER_STEPS["2"].content}
+            {STEPPER_STEPS['2'].content}
           </Typography>
           <ProgressButton
             disabled={!stepsCompleted.includes(1)}
@@ -460,57 +454,57 @@ export const Landing = (props: any): JSX.Element => {
             onCancelClick={() => {
               handleCancelButtonClick(2);
             }}
-            sx={{ margin: "16px 0px" }}
+            sx={{ margin: '16px 0px' }}
           >
             Collect
           </ProgressButton>
           {!stepsCompleted.includes(1) && (
             <Typography variant="body2" color="red">
-              {STEPPER_STEPS["2"].alert}
+              {STEPPER_STEPS['2'].alert}
             </Typography>
           )}
         </div>
       )
     },
     {
-      label: STEPPER_STEPS["3"].label,
+      label: STEPPER_STEPS['3'].label,
       content: (
         <div
           style={{
-            width: "100%",
-            height: "100%",
-            position: "relative",
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center"
+            width: '100%',
+            height: '100%',
+            position: 'relative',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center'
           }}
         >
           <Typography
             variant="body2"
             sx={{
-              color: [1, 2].some((item) => stepsCompleted.indexOf(item) === -1)
+              color: [1, 2].some(item => stepsCompleted.indexOf(item) === -1)
                 ? theme.palette.text.disabled
                 : theme.palette.text.primary
             }}
           >
-            {STEPPER_STEPS["3"].content}
+            {STEPPER_STEPS['3'].content}
           </Typography>
           <div
             style={{
-              margin: "16px 0px",
-              display: "flex",
-              flexDirection: "row",
-              gap: "16px"
+              margin: '16px 0px',
+              display: 'flex',
+              flexDirection: 'row',
+              gap: '16px'
             }}
           >
             <Button
               disabled={
                 intDur === undefined ||
                 (intDur === current && writtenToRAM) ||
-                [1, 2].some((item) => stepsCompleted.indexOf(item) === -1)
+                [1, 2].some(item => stepsCompleted.indexOf(item) === -1)
               }
               onClick={() => handleWriteConfigButtonClick(false)}
-              sx={{ width: "125px" }}
+              sx={{ width: '125px' }}
             >
               Write to RAM
             </Button>
@@ -518,17 +512,17 @@ export const Landing = (props: any): JSX.Element => {
               disabled={
                 intDur === undefined ||
                 (intDur === current && writtenToFlash) ||
-                [1, 2].some((item) => stepsCompleted.indexOf(item) === -1)
+                [1, 2].some(item => stepsCompleted.indexOf(item) === -1)
               }
               onClick={() => handleWriteConfigButtonClick(true)}
-              sx={{ width: "125px" }}
+              sx={{ width: '125px' }}
             >
               Write to Flash
             </Button>
           </div>
-          {[1, 2].some((item) => stepsCompleted.indexOf(item) === -1) && (
+          {[1, 2].some(item => stepsCompleted.indexOf(item) === -1) && (
             <Typography variant="body2" color="red">
-              {STEPPER_STEPS["3"].alert}
+              {STEPPER_STEPS['3'].alert}
             </Typography>
           )}
         </div>
@@ -539,7 +533,7 @@ export const Landing = (props: any): JSX.Element => {
   useEffect(() => {
     const initialize = async () => {
       try {
-        await postRequest("initialize", [testPixels]);
+        await postRequest('initialize', [testPixels]);
       } catch (error) {
         console.error(error);
         props.showAlert(ALERT_MESSAGE_TUNING_INITIALIZATION);
@@ -581,26 +575,26 @@ export const Landing = (props: any): JSX.Element => {
                 minHeight:
                   CANVAS_ATTRS.MIN_HEIGHT_CONTENT -
                   CANVAS_ATTRS.PADDING * 2 +
-                  "px"
+                  'px'
               }}
             />
           }
         >
           <div
             style={{
-              width: contentAttrs.PANEL_WIDTH + "px",
+              width: contentAttrs.PANEL_WIDTH + 'px',
               minHeight:
                 CANVAS_ATTRS.MIN_HEIGHT_CONTENT -
                 CANVAS_ATTRS.PADDING * 2 +
-                "px",
-              position: "relative"
+                'px',
+              position: 'relative'
             }}
           >
             <VerticalStepper
               steps={steps}
               strict={collecting}
               activeStep={activeStep}
-              onStepClick={(clickedStep) => {
+              onStepClick={clickedStep => {
                 prepareStep(clickedStep);
                 setActiveStep(clickedStep);
               }}
@@ -608,12 +602,12 @@ export const Landing = (props: any): JSX.Element => {
           </div>
           <div
             style={{
-              width: contentAttrs.PANEL_WIDTH + "px",
+              width: contentAttrs.PANEL_WIDTH + 'px',
               minHeight:
                 CANVAS_ATTRS.MIN_HEIGHT_CONTENT -
                 CANVAS_ATTRS.PADDING * 2 +
-                "px",
-              position: "relative"
+                'px',
+              position: 'relative'
             }}
           >
             {rightPanel[activeStep - 1]}
@@ -622,30 +616,30 @@ export const Landing = (props: any): JSX.Element => {
       </Content>
       <Controls
         sx={{
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center"
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center'
         }}
       >
         <BackButton
           disabled={activeStep === 1 || collecting}
           onClick={() => handleBackButtonClick()}
           sx={{
-            position: "absolute",
-            top: "50%",
-            left: "24px",
-            transform: "translate(0%, -50%)"
+            position: 'absolute',
+            top: '50%',
+            left: '24px',
+            transform: 'translate(0%, -50%)'
           }}
         />
         <NextButton
           disabled={activeStep === steps.length || collecting}
           onClick={() => handleNextButtonClick()}
           sx={{
-            position: "absolute",
-            top: "50%",
-            right: "24px",
-            transform: "translate(0%, -50%)"
+            position: 'absolute',
+            top: '50%',
+            right: '24px',
+            transform: 'translate(0%, -50%)'
           }}
         />
       </Controls>

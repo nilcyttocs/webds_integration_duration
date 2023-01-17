@@ -2,24 +2,20 @@ import {
   ILayoutRestorer,
   JupyterFrontEnd,
   JupyterFrontEndPlugin
-} from "@jupyterlab/application";
+} from '@jupyterlab/application';
+import { WidgetTracker } from '@jupyterlab/apputils';
+import { ILauncher } from '@jupyterlab/launcher';
+import { WebDSService, WebDSWidget } from '@webds/service';
 
-import { WidgetTracker } from "@jupyterlab/apputils";
-
-import { ILauncher } from "@jupyterlab/launcher";
-
-import { WebDSService, WebDSWidget } from "@webds/service";
-
-import { integrationDurationIcon } from "./icons";
-
-import IntegrationDurationWidget from "./widget/IntegrationDurationWidget";
+import { integrationDurationIcon } from './icons';
+import IntegrationDurationWidget from './widget/IntegrationDurationWidget';
 
 namespace Attributes {
-  export const command = "webds_integration_duration:open";
-  export const id = "webds_integration_duration_widget";
-  export const label = "Integration Duration";
-  export const caption = "Integration Duration";
-  export const category = "Touch - Config Library";
+  export const command = 'webds_integration_duration:open';
+  export const id = 'webds_integration_duration_widget';
+  export const label = 'Integration Duration';
+  export const caption = 'Integration Duration';
+  export const category = 'Touch - Config Library';
   export const rank = 40;
 }
 
@@ -29,7 +25,7 @@ export let webdsService: WebDSService;
  * Initialization data for the @webds/integration_duration extension.
  */
 const plugin: JupyterFrontEndPlugin<void> = {
-  id: "@webds/integration_duration:plugin",
+  id: '@webds/integration_duration:plugin',
   autoStart: true,
   requires: [ILauncher, ILayoutRestorer, WebDSService],
   activate: (
@@ -39,7 +35,7 @@ const plugin: JupyterFrontEndPlugin<void> = {
     service: WebDSService
   ) => {
     console.log(
-      "JupyterLab extension @webds/integration_duration is activated!"
+      'JupyterLab extension @webds/integration_duration is activated!'
     );
 
     webdsService = service;
@@ -51,7 +47,7 @@ const plugin: JupyterFrontEndPlugin<void> = {
       label: Attributes.label,
       caption: Attributes.caption,
       icon: (args: { [x: string]: any }) => {
-        return args["isLauncher"] ? integrationDurationIcon : undefined;
+        return args['isLauncher'] ? integrationDurationIcon : undefined;
       },
       execute: () => {
         if (!widget || widget.isDisposed) {
@@ -65,7 +61,7 @@ const plugin: JupyterFrontEndPlugin<void> = {
 
         if (!tracker.has(widget)) tracker.add(widget);
 
-        if (!widget.isAttached) shell.add(widget, "main");
+        if (!widget.isAttached) shell.add(widget, 'main');
 
         shell.activateById(widget.id);
       }

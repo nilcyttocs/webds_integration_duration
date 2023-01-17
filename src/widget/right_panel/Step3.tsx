@@ -1,16 +1,15 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState } from 'react';
 
-import Stack from "@mui/material/Stack";
-import Slider from "@mui/material/Slider";
-import Tooltip from "@mui/material/Tooltip";
-import TextField from "@mui/material/TextField";
-import Typography from "@mui/material/Typography";
+import Plot from 'react-plotly.js';
 
-import { useTheme } from "@mui/material/styles";
+import Slider from '@mui/material/Slider';
+import Stack from '@mui/material/Stack';
+import { useTheme } from '@mui/material/styles';
+import TextField from '@mui/material/TextField';
+import Tooltip from '@mui/material/Tooltip';
+import Typography from '@mui/material/Typography';
 
-import Plot from "react-plotly.js";
-
-import { ContentAttrs, getContentAttrs } from "../mui_extensions/constants";
+import { ContentAttrs, getContentAttrs } from '../mui_extensions/constants';
 
 const contentAttrs: ContentAttrs = getContentAttrs();
 
@@ -24,18 +23,18 @@ const plotData = [
   {
     x: [] as number[],
     y: [] as number[],
-    type: "scatter",
-    line: { color: "#ffa726", shape: "spline" }
+    type: 'scatter',
+    line: { color: '#ffa726', shape: 'spline' }
   },
   {
-    xaxis: "x2",
-    yaxis: "y2",
+    xaxis: 'x2',
+    yaxis: 'y2',
     x: [] as number[],
     y: [] as number[],
-    type: "scatter",
-    mode: "markers",
+    type: 'scatter',
+    mode: 'markers',
     marker: {
-      color: "#007dc3",
+      color: '#007dc3',
       size: 7
     }
   }
@@ -53,19 +52,19 @@ const plotLayout = {
     b: 24
   },
   font: {
-    color: ""
+    color: ''
   },
-  plot_bgcolor: "",
-  paper_bgcolor: "rgba(0, 0, 0, 0)",
+  plot_bgcolor: '',
+  paper_bgcolor: 'rgba(0, 0, 0, 0)',
   xaxis: {
-    title: "Integration Duration",
+    title: 'Integration Duration',
     range: [0, 0],
     fixedrange: true,
     zeroline: false,
     showline: true,
     showgrid: false,
     showticklabels: true,
-    tickmode: "array",
+    tickmode: 'array',
     tickvals: [] as number[],
     ticktext: [] as string[],
     tickfont: {
@@ -73,15 +72,15 @@ const plotLayout = {
     }
   },
   xaxis2: {
-    overlaying: "x",
-    side: "top",
+    overlaying: 'x',
+    side: 'top',
     range: [0, 0],
     fixedrange: true,
     zeroline: false,
     showline: true,
     showgrid: false,
     showticklabels: true,
-    tickmode: "array",
+    tickmode: 'array',
     tickvals: [] as number[],
     ticktext: [] as string[],
     tickfont: {
@@ -89,7 +88,7 @@ const plotLayout = {
     }
   },
   yaxis: {
-    title: "Signal",
+    title: 'Signal',
     range: plotRangeY,
     fixedrange: true,
     zeroline: false,
@@ -98,15 +97,15 @@ const plotLayout = {
     showticklabels: false
   },
   yaxis2: {
-    overlaying: "y",
+    overlaying: 'y',
     range: plotRangeY,
     fixedrange: true,
-    side: "right",
+    side: 'right',
     zeroline: false,
     showline: true,
     showgrid: false,
     showticklabels: true,
-    tickmode: "array",
+    tickmode: 'array',
     tickvals: [] as number[],
     ticktext: [] as string[],
     tickfont: {
@@ -115,29 +114,29 @@ const plotLayout = {
   },
   shapes: [
     {
-      type: "line",
-      yref: "paper",
-      x0: "",
-      x1: "",
+      type: 'line',
+      yref: 'paper',
+      x0: '',
+      x1: '',
       y0: 0,
       y1: 1,
       line: {
-        color: "grey",
+        color: 'grey',
         width: 1,
-        dash: "dot"
+        dash: 'dot'
       }
     },
     {
-      type: "line",
-      xref: "paper",
+      type: 'line',
+      xref: 'paper',
       x0: 0,
       x1: 1,
-      y0: "",
-      y1: "",
+      y0: '',
+      y1: '',
       line: {
-        color: "grey",
+        color: 'grey',
         width: 1,
-        dash: "dot"
+        dash: 'dot'
       }
     }
   ],
@@ -158,10 +157,10 @@ const resetPlot = () => {
   plotLayout.xaxis2.ticktext = [];
   plotLayout.yaxis2.tickvals = [];
   plotLayout.yaxis2.ticktext = [];
-  plotLayout.shapes[0].x0 = "";
-  plotLayout.shapes[0].x1 = "";
-  plotLayout.shapes[1].y0 = "";
-  plotLayout.shapes[1].y1 = "";
+  plotLayout.shapes[0].x0 = '';
+  plotLayout.shapes[0].x1 = '';
+  plotLayout.shapes[1].y0 = '';
+  plotLayout.shapes[1].y1 = '';
 };
 
 export const Step3 = (props: any): JSX.Element => {
@@ -200,20 +199,20 @@ export const Step3 = (props: any): JSX.Element => {
     plotLayout.xaxis.range = [0, MAX_X_RANGE - 1];
     plotLayout.xaxis2.range = [0, MAX_X_RANGE - 1];
     plotLayout.xaxis.tickvals = [0, MAX_X_RANGE - 1];
-    plotLayout.xaxis.ticktext = ["0", MAX_X_RANGE - 1 + ""];
+    plotLayout.xaxis.ticktext = ['0', MAX_X_RANGE - 1 + ''];
   };
 
   const updatePlot = (intDur: number | undefined) => {
     if (intDur !== undefined) {
       const signal = Math.round(model(intDur, props.modelParams.tau));
       plotLayout.xaxis2.tickvals = [intDur];
-      plotLayout.xaxis2.ticktext = [intDur + ""];
+      plotLayout.xaxis2.ticktext = [intDur + ''];
       plotLayout.yaxis2.tickvals = [signal];
-      plotLayout.yaxis2.ticktext = [signal + "%"];
-      plotLayout.shapes[0].x0 = intDur + "";
-      plotLayout.shapes[0].x1 = intDur + "";
-      plotLayout.shapes[1].y0 = signal + "";
-      plotLayout.shapes[1].y1 = signal + "";
+      plotLayout.yaxis2.ticktext = [signal + '%'];
+      plotLayout.shapes[0].x0 = intDur + '';
+      plotLayout.shapes[0].x1 = intDur + '';
+      plotLayout.shapes[1].y0 = signal + '';
+      plotLayout.shapes[1].y1 = signal + '';
     }
     setData([plotData[0], plotData[1]]);
     setLayout(plotLayout);
@@ -221,10 +220,10 @@ export const Step3 = (props: any): JSX.Element => {
   };
 
   const handleIntDurInputChange = (value: string) => {
-    if (value !== "" && isNaN(Number(value))) {
+    if (value !== '' && isNaN(Number(value))) {
       return;
     }
-    if (value === "") {
+    if (value === '') {
       setIntDur(undefined);
       return;
     }
@@ -243,7 +242,7 @@ export const Step3 = (props: any): JSX.Element => {
   };
 
   useEffect(() => {
-    plotLayout.plot_bgcolor = theme.palette.mode === "light" ? "#fff" : "#000";
+    plotLayout.plot_bgcolor = theme.palette.mode === 'light' ? '#fff' : '#000';
     plotLayout.font.color = theme.palette.text.primary;
     setData([plotData[0], plotData[1]]);
     setLayout(plotLayout);
@@ -274,69 +273,67 @@ export const Step3 = (props: any): JSX.Element => {
   return (
     <div
       style={{
-        width: "100%",
-        height: "100%",
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center"
+        width: '100%',
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center'
       }}
     >
       {initialized && (
         <>
-          <div style={{ position: "relative" }}>
+          <div style={{ position: 'relative' }}>
             <Plot
               data={data}
               layout={layout}
               frames={frames}
               config={config}
-              onInitialized={(figure) => storeState(figure)}
-              onUpdate={(figure) => storeState(figure)}
+              onInitialized={figure => storeState(figure)}
+              onUpdate={figure => storeState(figure)}
             />
             <div
               style={{
-                position: "absolute",
+                position: 'absolute',
                 top: 0,
                 bottom: 0,
                 left: 0,
                 right: 0,
-                background: "rgba(0, 0, 0, 0)"
+                background: 'rgba(0, 0, 0, 0)'
               }}
             />
           </div>
-          <div style={{ marginTop: "24px", alignSelf: "stretch" }}>
-            <Typography variant="body2" sx={{ display: "inline-block" }}>
+          <div style={{ marginTop: '24px', alignSelf: 'stretch' }}>
+            <Typography variant="body2" sx={{ display: 'inline-block' }}>
               Integration Duration:&nbsp;
             </Typography>
             <Tooltip
               title={
                 intDur !== undefined
                   ? intDur < props.modelParams.minimumIntDur
-                    ? "suggested minimum: " + props.modelParams.minimumIntDur
-                    : ""
-                  : ""
+                    ? 'suggested minimum: ' + props.modelParams.minimumIntDur
+                    : ''
+                  : ''
               }
               arrow
             >
               <TextField
                 variant="standard"
                 disabled={props.modelParams === undefined}
-                value={intDur !== undefined ? intDur : ""}
-                inputProps={{ style: { textAlign: "center" } }}
-                onChange={(event) =>
-                  handleIntDurInputChange(event.target.value)
-                }
+                value={intDur !== undefined ? intDur : ''}
+                inputProps={{ style: { textAlign: 'center' } }}
+                onChange={event => handleIntDurInputChange(event.target.value)}
                 sx={{
-                  width: "48px",
-                  display: "inline-block",
-                  "& .MuiInput-root": {
-                    fontSize: "0.875rem"
+                  width: '48px',
+                  display: 'inline-block',
+                  '& .MuiInput-root': {
+                    fontSize: '0.875rem'
                   },
-                  "& .MuiInput-input": {
+                  '& .MuiInput-input': {
                     padding: 0,
                     color:
                       intDur !== undefined
                         ? intDur < props.modelParams.minimumIntDur
-                          ? "red"
+                          ? 'red'
                           : theme.palette.text.primary
                         : null
                   }
@@ -346,8 +343,8 @@ export const Step3 = (props: any): JSX.Element => {
             <Typography
               variant="body2"
               sx={{
-                display: "inline-block",
-                fontSize: "0.65rem"
+                display: 'inline-block',
+                fontSize: '0.65rem'
               }}
             >
               &nbsp;(TAC clock periods)
@@ -355,25 +352,25 @@ export const Step3 = (props: any): JSX.Element => {
           </div>
           <div
             style={{
-              marginTop: "16px",
-              alignSelf: "stretch",
-              display: "flex",
-              flexDirection: "row",
-              alignItems: "center"
+              marginTop: '16px',
+              alignSelf: 'stretch',
+              display: 'flex',
+              flexDirection: 'row',
+              alignItems: 'center'
             }}
           >
             <Typography
               variant="body2"
               sx={{
-                fontSize: "0.65rem"
+                fontSize: '0.65rem'
               }}
             >
               Suggested Setting: {props.modelParams?.optimalIntDur[0]}
             </Typography>
           </div>
-          <div style={{ width: "100%", marginTop: "16px" }}>
+          <div style={{ width: '100%', marginTop: '16px' }}>
             <Stack spacing={1} direction="row">
-              <Typography variant="body2" sx={{ paddingTop: "5px" }}>
+              <Typography variant="body2" sx={{ paddingTop: '5px' }}>
                 {0}&nbsp;
               </Typography>
               <Slider
@@ -384,7 +381,7 @@ export const Step3 = (props: any): JSX.Element => {
                 value={sliderValue}
                 onChange={handleSliderChange}
               />
-              <Typography variant="body2" sx={{ paddingTop: "5px" }}>
+              <Typography variant="body2" sx={{ paddingTop: '5px' }}>
                 &nbsp;{MAX_X_RANGE - 1}
               </Typography>
             </Stack>
