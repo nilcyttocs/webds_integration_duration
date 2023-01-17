@@ -174,7 +174,7 @@ export const Landing = (props: any): JSX.Element => {
   const eventHandler = async (event: any) => {
     const data = JSON.parse(event.data);
 
-    if (data.state === 'run') {
+    if (data.state === 'running') {
       switch (activeStep) {
         case 1:
           if (data.progress === 100) {
@@ -197,7 +197,7 @@ export const Landing = (props: any): JSX.Element => {
         default:
           break;
       }
-    } else if (data.state === 'stop') {
+    } else if (data.state === 'completed') {
       eventSource!.removeEventListener(EVENT_NAME, eventHandler, false);
       eventSource!.close();
       eventSource = undefined;
@@ -229,7 +229,7 @@ export const Landing = (props: any): JSX.Element => {
         default:
           break;
       }
-    } else if (data.state === 'terminate') {
+    } else if (data.state === 'terminated') {
       eventSource!.removeEventListener(EVENT_NAME, eventHandler, false);
       eventSource!.close();
       eventSource = undefined;
