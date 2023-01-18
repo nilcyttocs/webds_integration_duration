@@ -1,6 +1,6 @@
 {
   "name": "@webds/integration_duration",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "webds_integration_duration",
   "keywords": [
     "jupyter",
@@ -52,8 +52,7 @@
     "watch:src": "tsc -w",
     "watch:labextension": "jupyter labextension watch ."
   },
-  "dependencies": {
-  },
+  "dependencies": {},
   "devDependencies": {
     "@jupyterlab/builder": "^3.1.0",
     "@typescript-eslint/eslint-plugin": "^4.8.1",
