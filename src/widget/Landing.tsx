@@ -229,21 +229,6 @@ export const Landing = (props: any): JSX.Element => {
         default:
           break;
       }
-    } else if (data.state === 'terminated') {
-      eventSource!.removeEventListener(EVENT_NAME, eventHandler, false);
-      eventSource!.close();
-      eventSource = undefined;
-      switch (activeStep) {
-        case 1:
-          prepareStep(1);
-          break;
-        case 2:
-          prepareStep(2);
-          setTestPixelPauseResume('resume');
-          break;
-        default:
-          break;
-      }
     }
   };
 
@@ -327,6 +312,20 @@ export const Landing = (props: any): JSX.Element => {
   const handleCancelButtonClick = async (step: number) => {
     try {
       await postRequest('cancel');
+      eventSource!.removeEventListener(EVENT_NAME, eventHandler, false);
+      eventSource!.close();
+      eventSource = undefined;
+      switch (activeStep) {
+        case 1:
+          prepareStep(1);
+          break;
+        case 2:
+          prepareStep(2);
+          setTestPixelPauseResume('resume');
+          break;
+        default:
+          break;
+      }
     } catch (error) {
       console.error(error);
       props.showAlert(ALERT_MESSAGE_TUNING_CANCEL);
