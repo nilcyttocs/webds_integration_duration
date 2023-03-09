@@ -15,7 +15,7 @@ namespace Attributes {
   export const id = 'webds_integration_duration_widget';
   export const label = 'Integration Duration';
   export const caption = 'Integration Duration';
-  export const category = 'Touch - Config Library';
+  export const category = 'Device - Config Library';
   export const rank = 40;
 }
 
