@@ -219,7 +219,7 @@ export const Landing = (props: any): JSX.Element => {
               setStepComplete(2);
             } catch (error) {
               console.error(error);
-              props.showAlert(ALERT_MESSAGE_TUNING_RESULTS);
+              props.setAlert(ALERT_MESSAGE_TUNING_RESULTS);
               await sleep(500);
               prepareStep(2);
             }
@@ -279,7 +279,7 @@ export const Landing = (props: any): JSX.Element => {
           await postRequest('collect_baseline_data');
         } catch (error) {
           console.error(error);
-          props.showAlert(ALERT_MESSAGE_TUNING_BASELINE_DATA);
+          props.setAlert(ALERT_MESSAGE_TUNING_BASELINE_DATA);
         }
         break;
       case 2:
@@ -293,7 +293,7 @@ export const Landing = (props: any): JSX.Element => {
           await postRequest('collect_test_pixel_data', [testPixel]);
         } catch (error) {
           console.error(error);
-          props.showAlert(ALERT_MESSAGE_TUNING_TEST_PIXEL_DATA);
+          props.setAlert(ALERT_MESSAGE_TUNING_TEST_PIXEL_DATA);
         }
         break;
       default:
@@ -328,7 +328,7 @@ export const Landing = (props: any): JSX.Element => {
       }
     } catch (error) {
       console.error(error);
-      props.showAlert(ALERT_MESSAGE_TUNING_CANCEL);
+      props.setAlert(ALERT_MESSAGE_TUNING_CANCEL);
     }
   };
 
@@ -358,7 +358,7 @@ export const Landing = (props: any): JSX.Element => {
       await webdsService.touchcomm.writeStaticConfig(entries, commit);
     } catch (error) {
       console.error(error);
-      props.showAlert(
+      props.setAlert(
         commit ? ALERT_MESSAGE_WRITE_TO_FLASH : ALERT_MESSAGE_WRITE_TO_RAM
       );
     }
@@ -535,7 +535,7 @@ export const Landing = (props: any): JSX.Element => {
         await postRequest('initialize', [testPixels]);
       } catch (error) {
         console.error(error);
-        props.showAlert(ALERT_MESSAGE_TUNING_INITIALIZATION);
+        props.setAlert(ALERT_MESSAGE_TUNING_INITIALIZATION);
         return;
       }
     };

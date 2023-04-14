@@ -23,21 +23,14 @@ export type ContextData = {
 
 export const Context = React.createContext({} as ContextData);
 
-let alertMessage = '';
-
 export const IntegrationDurationComponent = (props: any): JSX.Element => {
   const [initialized, setInitialized] = useState<boolean>(false);
-  const [alert, setAlert] = useState<boolean>(false);
+  const [alert, setAlert] = useState<string | undefined>(undefined);
   const [colsRows, setColsRows] = useState<[number, number]>([0, 0]);
   const [txOnYAxis, setTxOnYAxis] = useState<boolean>(true);
   const [configValues, setConfigValues] = useState<any[]>([]);
 
   const webdsTheme = webdsService.ui.getWebDSTheme();
-
-  const showAlert = (message: string) => {
-    alertMessage = message;
-    setAlert(true);
-  };
 
   useEffect(() => {
     const initialize = async () => {
@@ -51,9 +44,9 @@ export const IntegrationDurationComponent = (props: any): JSX.Element => {
       } catch (error) {
         console.error(error);
         if (external) {
-          showAlert(ALERT_MESSAGE_PUBLIC_CONFIG_JSON);
+          setAlert(ALERT_MESSAGE_PUBLIC_CONFIG_JSON);
         } else {
-          showAlert(ALERT_MESSAGE_PRIVATE_CONFIG_JSON);
+          setAlert(ALERT_MESSAGE_PRIVATE_CONFIG_JSON);
         }
         return;
       }
@@ -70,13 +63,13 @@ export const IntegrationDurationComponent = (props: any): JSX.Element => {
         }
       } catch (error) {
         console.error(`Error - POST /webds/command\n${dataToSend}\n${error}`);
-        showAlert(ALERT_MESSAGE_APP_INFO);
+        setAlert(ALERT_MESSAGE_APP_INFO);
         return;
       }
       try {
         const config = await webdsService.touchcomm.readStaticConfig();
         if (!CONFIG_ENTRIES.every(item => item in config)) {
-          showAlert(ALERT_MESSAGE_STATIC_CONFIG_ENTRIES);
+          setAlert(ALERT_MESSAGE_STATIC_CONFIG_ENTRIES);
           return;
         }
         setConfigValues(CONFIG_ENTRIES.map(item => config[item]));
@@ -85,7 +78,7 @@ export const IntegrationDurationComponent = (props: any): JSX.Element => {
         }
       } catch (error) {
         console.error(error);
-        showAlert(ALERT_MESSAGE_STATIC_CONFIG);
+        setAlert(ALERT_MESSAGE_STATIC_CONFIG);
         return;
       }
       setInitialized(true);
@@ -97,13 +90,13 @@ export const IntegrationDurationComponent = (props: any): JSX.Element => {
     <>
       <ThemeProvider theme={webdsTheme}>
         <div className="jp-webds-widget-body">
-          {alert && (
+          {alert !== undefined && (
             <Alert
               severity="error"
-              onClose={() => setAlert(false)}
+              onClose={() => setAlert(undefined)}
               sx={{ whiteSpace: 'pre-wrap' }}
             >
-              {alertMessage}
+              {alert}
             </Alert>
           )}
           {initialized && (
@@ -114,7 +107,7 @@ export const IntegrationDurationComponent = (props: any): JSX.Element => {
                 txOnYAxis: txOnYAxis
               }}
             >
-              <Landing showAlert={showAlert} configValues={configValues} />
+              <Landing setAlert={setAlert} configValues={configValues} />
             </Context.Provider>
           )}
         </div>
