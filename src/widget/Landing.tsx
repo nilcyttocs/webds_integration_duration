@@ -29,7 +29,7 @@ import {
   BackButton,
   NextButton,
   ProgressButton
-} from './mui_extensions/Button';
+} from './mui_extensions/Buttons';
 import { Canvas } from './mui_extensions/Canvas';
 import {
   CANVAS_ATTRS,
@@ -38,7 +38,7 @@ import {
 } from './mui_extensions/constants';
 import { Content } from './mui_extensions/Content';
 import { Controls } from './mui_extensions/Controls';
-import { VerticalStepper } from './mui_extensions/Stepper';
+import { VerticalStepper } from './mui_extensions/Navigation';
 import Step1 from './right_panel/Step1';
 import Step2 from './right_panel/Step2';
 import Step3 from './right_panel/Step3';
