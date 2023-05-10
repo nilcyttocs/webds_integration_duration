@@ -212,22 +212,6 @@ export const STEP3_1 = (props: any): JSX.Element => {
     setConfig(plotConfig);
   };
 
-  const handleIntDurInputChange = (value: string) => {
-    if (value !== '' && isNaN(Number(value))) {
-      return;
-    }
-    if (value === '') {
-      props.setIntDur(undefined);
-      return;
-    }
-    const num = parseInt(value, 10);
-    if (num < MAX_X_RANGE) {
-      updatePlot(num);
-      setSliderValue(num);
-      props.setIntDur(num);
-    }
-  };
-
   const handleSliderChange = (event: any) => {
     updatePlot(event.target.value);
     setSliderValue(event.target.value);
