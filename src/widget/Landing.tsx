@@ -215,6 +215,7 @@ export const Landing = (props: any): JSX.Element => {
               const results = await postRequest('get_results');
               console.log(results);
               setModelParams(results as ModelParams);
+              setIntDur(results.optimalIntDur[0]);
               setTestPixelInProgress(false);
               setStepComplete(2);
             } catch (error) {
@@ -376,7 +377,12 @@ export const Landing = (props: any): JSX.Element => {
       inProgress={testPixelInProgress}
       pauseResume={testPixelPauseResume}
     />,
-    <Step3 modelParams={modelParams} setIntDur={setIntDur} current={current} />
+    <Step3
+      modelParams={modelParams}
+      intDur={intDur}
+      setIntDur={setIntDur}
+      current={current}
+    />
   ];
 
   const steps = [
