@@ -167,7 +167,9 @@ export const STEP3_1 = (props: any): JSX.Element => {
   const [layout, setLayout] = useState<any>({});
   const [config, setConfig] = useState<any>({});
   const [frames, setFrames] = useState<any>([]);
-  const [sliderValue, setSliderValue] = useState<number>(props.intDur);
+  const [sliderValue, setSliderValue] = useState<number>(
+    props.intDur === undefined ? 0 : props.intDur
+  );
 
   const theme = useTheme();
 
