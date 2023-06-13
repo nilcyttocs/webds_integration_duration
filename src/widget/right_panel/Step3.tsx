@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 
+import { CarousalNavigation } from '../mui_extensions/Navigation';
 import STEP3_1 from './STEP3_1';
 import STEP3_2 from './STEP3_2';
 import STEP3_3 from './STEP3_3';
-import { CarouselNavigation } from '../mui_extensions/Navigation';
 
 export const Step3 = (props: any): JSX.Element => {
   const [step, setStep] = useState(1);
@@ -44,7 +44,7 @@ export const Step3 = (props: any): JSX.Element => {
       }}
     >
       {showStep()}
-      <CarouselNavigation
+      <CarousalNavigation
         disabled={props.modelParams === undefined}
         onStepClick={(step: number) => setStep(step)}
         sx={{ position: 'absolute', bottom: 0 }}
